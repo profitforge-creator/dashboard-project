@@ -1,0 +1,9 @@
+{
+  "name": "compass",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal goal, schedule, and idea-tracking app",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0"
+  }
+}

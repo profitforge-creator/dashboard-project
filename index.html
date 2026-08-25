@@ -3,26 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Overview · Pulse Dashboard</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%231E40AF%22/><path d=%22M6 14l3-4 3 3 6-8%22 stroke=%22%23F59E0B%22 stroke-width=%222.2%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
+<title>Compass · Goals, Schedule & Ideas</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234338CA%22/><path d=%22M12 6l1.8 4.2L18 12l-4.2 1.8L12 18l-1.8-4.2L6 12l4.2-1.8Z%22 fill=%22%23FBBF24%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
   tailwind.config = {
     darkMode: 'class',
     theme: {
       extend: {
         fontFamily: {
-          sans: ['Fira Sans', 'ui-sans-serif', 'system-ui'],
+          sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
           mono: ['Fira Code', 'ui-monospace', 'monospace'],
         },
         colors: {
-          primary: { DEFAULT: '#1E40AF', light: '#3B82F6' },
-          accent: '#F59E0B',
-          canvas: '#F8FAFC',
+          primary: { DEFAULT: '#4338CA', light: '#6366F1' },
+          accent: '#FBBF24',
+          canvas: '#F7F7FB',
         },
       },
     },
@@ -38,503 +37,351 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
   }
-  [x-cloak] { display: none !important; }
+  [x-cloak], .app-hidden { display: none !important; }
+  .fade-in { animation: fadeIn .18s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulseUrgent { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+  .urgent-pulse { animation: pulseUrgent 1.6s ease-in-out infinite; }
+  .timeline-track { background: repeating-linear-gradient(90deg, transparent, transparent 5px); }
+  input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+  .card-hover { transition: box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { box-shadow: 0 4px 20px -4px rgb(0 0 0 / 0.12); }
+  .dark .card-hover:hover { box-shadow: 0 4px 20px -4px rgb(0 0 0 / 0.4); }
 </style>
 </head>
 <body class="bg-canvas dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased">
 
-<div class="min-h-screen flex">
+<div class="min-h-screen flex flex-col lg:flex-row">
 
   <!-- Sidebar (desktop) -->
-  <aside class="hidden lg:flex lg:flex-col w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0">
+  <aside class="hidden lg:flex lg:flex-col w-60 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0">
     <div class="h-16 flex items-center gap-2.5 px-5 border-b border-slate-200 dark:border-slate-800">
       <span class="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0" aria-hidden="true">
-        <svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-accent" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l3-4 3 3 6-8"/></svg>
+        <svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-accent" fill="currentColor"><path d="M12 6l1.8 4.2L18 12l-4.2 1.8L12 18l-1.8-4.2L6 12l4.2-1.8Z"/></svg>
       </span>
-      <span class="font-semibold tracking-tight text-[15px]">Pulse</span>
+      <span class="font-bold tracking-tight text-[15px]">Compass</span>
     </div>
 
-    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6" aria-label="Primary">
-      <div>
-        <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Main</p>
-        <ul class="space-y-1">
-          <li>
-            <a href="index.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light" aria-current="page">
-              <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-              Overview
-            </a>
-          </li>
-          <li>
-            <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors duration-150">
-              <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
-              Analytics
-            </a>
-          </li>
-          <li>
-            <a href="orders.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors duration-150">
-              <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-              Orders
-              <span class="ml-auto text-[11px] font-semibold bg-accent/15 text-accent px-1.5 py-0.5 rounded-md">12</span>
-            </a>
-          </li>
-          <li>
-            <a href="customers.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors duration-150">
-              <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-              Customers
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      <div>
-        <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Workspace</p>
-        <ul class="space-y-1">
-          <li>
-            <a href="reports.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors duration-150">
-              <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h6M9 19h4"/></svg>
-              Reports
-            </a>
-          </li>
-          <li>
-            <a href="settings.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors duration-150">
-              <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009.6 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 8.6a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-              Settings
-            </a>
-          </li>
-        </ul>
-      </div>
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="Primary">
+      <button data-section="long" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150" aria-current="page">
+        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg>
+        Long-term Goals
+      </button>
+      <button data-section="short" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150">
+        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Short-term Goals
+      </button>
+      <button data-section="schedule" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150">
+        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Daily Schedule
+      </button>
+      <button data-section="ideas" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150">
+        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+        Idea Dump
+        <span id="idea-count-badge" class="ml-auto text-[11px] font-semibold bg-accent/20 text-amber-700 dark:text-accent px-1.5 py-0.5 rounded-md app-hidden"></span>
+      </button>
     </nav>
 
     <div class="p-3 border-t border-slate-200 dark:border-slate-800">
-      <a href="settings.html" class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150">
-        <img src="https://api.dicebear.com/9.x/notionists/svg?seed=Caelen" alt="" class="h-9 w-9 rounded-full bg-slate-200 shrink-0" width="36" height="36" />
-        <span class="min-w-0">
-          <span class="block text-sm font-medium truncate">Caelen Chen</span>
-          <span class="block text-xs text-slate-500 dark:text-slate-400 truncate">caelen@pulse.io</span>
-        </span>
-      </a>
+      <button id="theme-toggle" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150">
+        <svg id="theme-icon" class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg>
+        <span id="theme-label">Dark mode</span>
+      </button>
+      <div id="sync-indicator" class="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 dark:text-slate-500">
+        <span id="sync-dot" class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+        <span id="sync-text">Connecting…</span>
+      </div>
     </div>
   </aside>
 
-  <!-- Mobile sidebar -->
-  <div id="mobile-nav" class="fixed inset-0 z-50 lg:hidden hidden" role="dialog" aria-modal="true" aria-label="Navigation">
-    <div id="mobile-nav-overlay" class="absolute inset-0 bg-slate-900/50"></div>
-    <aside class="absolute inset-y-0 left-0 w-72 max-w-[85%] bg-white dark:bg-slate-900 shadow-xl flex flex-col">
-      <div class="h-16 flex items-center justify-between gap-2.5 px-5 border-b border-slate-200 dark:border-slate-800">
-        <div class="flex items-center gap-2.5">
-          <span class="h-8 w-8 rounded-lg bg-primary flex items-center justify-center" aria-hidden="true">
-            <svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-accent" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l3-4 3 3 6-8"/></svg>
-          </span>
-          <span class="font-semibold tracking-tight text-[15px]">Pulse</span>
-        </div>
-        <button id="close-mobile-nav" type="button" class="h-9 w-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Close navigation">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="Primary mobile">
-        <a href="index.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary/10 text-primary dark:bg-primary/20">Overview</a>
-        <a href="analytics.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Analytics</a>
-        <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Orders</a>
-        <a href="customers.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Customers</a>
-        <a href="reports.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Reports</a>
-        <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Settings</a>
-      </nav>
-    </aside>
-  </div>
+  <!-- Mobile top bar -->
+  <header class="lg:hidden sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-14 flex items-center justify-between px-4">
+    <div class="flex items-center gap-2">
+      <span class="h-7 w-7 rounded-lg bg-primary flex items-center justify-center" aria-hidden="true">
+        <svg viewBox="0 0 24 24" class="h-4 w-4 text-accent" fill="currentColor"><path d="M12 6l1.8 4.2L18 12l-4.2 1.8L12 18l-1.8-4.2L6 12l4.2-1.8Z"/></svg>
+      </span>
+      <span class="font-bold text-sm" id="mobile-title">Long-term Goals</span>
+    </div>
+    <button id="theme-toggle-mobile" class="p-2 rounded-lg text-slate-500 dark:text-slate-400" aria-label="Toggle theme">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg>
+    </button>
+  </header>
 
   <!-- Main -->
-  <div class="flex-1 min-w-0 flex flex-col">
+  <main class="flex-1 min-w-0 pb-20 lg:pb-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6">
 
-    <!-- Topbar -->
-    <header class="h-16 sticky top-0 z-40 flex items-center gap-3 px-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur">
-      <button id="open-mobile-nav" type="button" class="lg:hidden h-9 w-9 -ml-1 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
-
-      <label for="global-search" class="sr-only">Search</label>
-      <div class="relative flex-1 max-w-md">
-        <svg class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="global-search" type="search" placeholder="Search orders, customers, reports…" class="w-full h-9 pl-9 pr-3 rounded-lg text-sm bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-slate-400 transition-colors duration-150" />
-      </div>
-
-      <div class="ml-auto flex items-center gap-1.5 sm:gap-2">
-        <button type="button" id="theme-toggle" class="h-9 w-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150 cursor-pointer" aria-label="Toggle dark mode">
-          <svg id="theme-icon-sun" class="h-[18px] w-[18px] hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-          <svg id="theme-icon-moon" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-        </button>
-        <button type="button" class="relative h-9 w-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150 cursor-pointer" aria-label="Notifications, 3 unread">
-          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg>
-          <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-white dark:ring-slate-900"></span>
-        </button>
-        <a href="settings.html" class="ml-1 cursor-pointer">
-          <img src="https://api.dicebear.com/9.x/notionists/svg?seed=Caelen" alt="Caelen Chen account" class="h-8 w-8 rounded-full bg-slate-200" width="32" height="32" />
-        </a>
-      </div>
-    </header>
-
-    <main class="flex-1 px-4 sm:px-6 py-6 max-w-[1600px] w-full mx-auto">
-
-      <!-- Page heading -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 class="text-xl sm:text-2xl font-semibold tracking-tight">Good morning, Caelen</h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Here's what's happening across your workspace today.</p>
+      <!-- Reminder banner (idea resurfacing) -->
+      <div id="reminder-banner" class="app-hidden fade-in mb-5 rounded-xl border border-accent/30 bg-amber-50 dark:bg-amber-500/10 p-4">
+        <div class="flex items-start gap-3">
+          <span class="h-8 w-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0 text-amber-600 dark:text-accent">
+            <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-accent mb-0.5">Remember this?</p>
+            <p id="reminder-text" class="text-sm text-slate-700 dark:text-slate-200 break-words"></p>
+            <p id="reminder-meta" class="text-xs text-slate-400 mt-1"></p>
+            <div class="flex flex-wrap gap-2 mt-2.5">
+              <button id="reminder-promote" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-primary text-white hover:bg-primary-light transition-colors">Turn into a goal</button>
+              <button id="reminder-snooze" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Show another</button>
+              <button id="reminder-dismiss" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-auto">Dismiss</button>
+            </div>
+          </div>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <label for="range" class="sr-only">Date range</label>
-          <select id="range" class="h-9 rounded-lg text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-3 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer">
-            <option>Last 7 days</option>
-            <option selected>Last 30 days</option>
-            <option>Last quarter</option>
-            <option>Year to date</option>
-          </select>
-          <button type="button" class="h-9 px-3.5 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 active:bg-primary/95 transition-colors duration-150 cursor-pointer flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 dark:focus:ring-offset-slate-950">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            New report
+      </div>
+
+      <!-- Section: Long-term / Short-term Goals (shared template) -->
+      <section id="section-long" class="goal-section">
+        <div class="flex items-center justify-between mb-1">
+          <h1 class="text-xl font-bold tracking-tight">Long-term Goals</h1>
+          <button data-add-goal="long" class="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-3.5 py-2 rounded-lg hover:bg-primary-light transition-colors">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            New Goal
           </button>
         </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">The big picture. Where you're headed over months and years.</p>
+        <div data-list="long" class="space-y-3"></div>
+        <div data-empty="long" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
+          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg>
+          <p class="text-sm">No long-term goals yet. Set your first one.</p>
+        </div>
+      </section>
+
+      <section id="section-short" class="goal-section app-hidden">
+        <div class="flex items-center justify-between mb-1">
+          <h1 class="text-xl font-bold tracking-tight">Short-term Goals</h1>
+          <button data-add-goal="short" class="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-3.5 py-2 rounded-lg hover:bg-primary-light transition-colors">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            New Goal
+          </button>
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">The next few days or weeks. Concrete, near-term wins.</p>
+        <div data-list="short" class="space-y-3"></div>
+        <div data-empty="short" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
+          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <p class="text-sm">No short-term goals yet. Add one to get moving.</p>
+        </div>
+      </section>
+
+      <!-- Section: Daily Schedule -->
+      <section id="section-schedule" class="app-hidden">
+        <div class="flex items-center justify-between mb-1 flex-wrap gap-3">
+          <h1 class="text-xl font-bold tracking-tight">Daily Schedule</h1>
+          <button data-add-task class="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-3.5 py-2 rounded-lg hover:bg-primary-light transition-colors">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add Task
+          </button>
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Plan the day, then check things off.</p>
+
+        <div class="flex items-center gap-2 mb-5">
+          <button id="date-prev" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Previous day">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <input id="schedule-date" type="date" class="text-sm font-medium px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" />
+          <button id="date-next" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Next day">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button id="date-today" class="text-sm font-semibold text-primary dark:text-primary-light px-2.5 py-2 rounded-lg hover:bg-primary/10 transition-colors">Today</button>
+          <span id="schedule-progress" class="ml-auto text-xs font-medium text-slate-400"></span>
+        </div>
+
+        <div data-list="schedule" class="space-y-2"></div>
+        <div data-empty="schedule" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
+          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <p class="text-sm">Nothing scheduled for this day.</p>
+        </div>
+      </section>
+
+      <!-- Section: Idea Dump -->
+      <section id="section-ideas" class="app-hidden">
+        <h1 class="text-xl font-bold tracking-tight mb-1">Idea Dump</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Capture the thought now, make sense of it later. Every entry is timestamped and searchable.</p>
+
+        <form id="idea-form" class="mb-4">
+          <div class="relative">
+            <textarea id="idea-input" rows="2" placeholder="What's on your mind? (Enter to save, Shift+Enter for a new line, #tag to categorize)" class="w-full resize-none text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-3.5 pr-24 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40"></textarea>
+            <button type="submit" class="absolute right-2 bottom-2 text-xs font-semibold bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-light transition-colors">Save</button>
+          </div>
+        </form>
+
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 mb-5">
+          <form id="assistant-form" class="flex items-center gap-2">
+            <svg class="h-4 w-4 shrink-0 text-primary dark:text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <input id="assistant-input" type="text" placeholder="Ask your assistant about past ideas… e.g. “what did I think about the podcast?”" class="flex-1 text-sm bg-transparent focus:outline-none min-w-0" />
+            <button type="submit" class="text-xs font-semibold text-primary dark:text-primary-light px-2 py-1 shrink-0">Ask</button>
+          </form>
+          <div id="assistant-reply" class="app-hidden mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-sm"></div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
+          <div class="relative flex-1 min-w-[180px]">
+            <svg class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input id="idea-search" type="text" placeholder="Search ideas…" class="w-full text-sm pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+          </div>
+          <div id="tag-filters" class="flex items-center gap-1.5 flex-wrap"></div>
+        </div>
+
+        <div data-list="ideas" class="space-y-2.5"></div>
+        <div data-empty="ideas" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
+          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+          <p class="text-sm">Nothing dumped yet. Type above whenever a thought strikes.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-stretch" aria-label="Primary">
+  <button data-section="long" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium" aria-current="page">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg>
+    Long
+  </button>
+  <button data-section="short" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Short
+  </button>
+  <button data-section="schedule" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Schedule
+  </button>
+  <button data-section="ideas" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium relative">
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+    Ideas
+  </button>
+</nav>
+
+<!-- Floating quick-capture button (mobile, visible on non-idea sections) -->
+<button id="fab-idea" class="lg:hidden app-hidden fixed bottom-20 right-4 z-30 h-12 w-12 rounded-full bg-accent text-slate-900 shadow-lg flex items-center justify-center" aria-label="Quick capture idea">
+  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+</button>
+
+<!-- Goal modal -->
+<div id="goal-modal" class="app-hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
+  <div class="relative bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-5 sm:p-6 shadow-xl fade-in max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h2 id="goal-modal-title" class="text-lg font-bold">New Goal</h2>
+      <button data-close-modal class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="goal-form" class="space-y-4">
+      <input type="hidden" id="goal-id" />
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Title</label>
+        <input id="goal-title" required type="text" placeholder="e.g. Run a half marathon" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
       </div>
-
-      <!-- KPI cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <div class="flex items-start justify-between">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Total revenue</p>
-            <span class="h-8 w-8 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light shrink-0">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-            </span>
-          </div>
-          <p class="mt-3 text-2xl font-semibold font-mono tabular-nums">$84,204</p>
-          <p class="mt-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
-            12.4% vs last period
-          </p>
-        </div>
-
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <div class="flex items-start justify-between">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Active users</p>
-            <span class="h-8 w-8 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light shrink-0">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-            </span>
-          </div>
-          <p class="mt-3 text-2xl font-semibold font-mono tabular-nums">12,847</p>
-          <p class="mt-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
-            5.2% vs last period
-          </p>
-        </div>
-
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <div class="flex items-start justify-between">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Conversion rate</p>
-            <span class="h-8 w-8 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light shrink-0">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
-            </span>
-          </div>
-          <p class="mt-3 text-2xl font-semibold font-mono tabular-nums">3.42%</p>
-          <p class="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 flex items-center gap-1">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-            0.8% vs last period
-          </p>
-        </div>
-
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <div class="flex items-start justify-between">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Open tickets</p>
-            <span class="h-8 w-8 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary dark:text-primary-light shrink-0">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-            </span>
-          </div>
-          <p class="mt-3 text-2xl font-semibold font-mono tabular-nums">28</p>
-          <p class="mt-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
-            No change
-          </p>
-        </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Description <span class="font-normal text-slate-400">(optional)</span></label>
+        <textarea id="goal-desc" rows="2" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"></textarea>
       </div>
-
-      <!-- Charts row -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
-        <div class="xl:col-span-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5">
-          <div class="flex items-center justify-between mb-1">
-            <div>
-              <h2 class="text-sm font-semibold">Revenue trend</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Gross revenue vs. previous period</p>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-              <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-primary"></span>This period</span>
-              <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-700"></span>Previous</span>
-            </div>
-          </div>
-          <div class="h-64 mt-3">
-            <canvas id="revenueChart" role="img" aria-label="Line chart comparing revenue this period against the previous period across the last 30 days"></canvas>
-          </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Type</label>
+          <select id="goal-term" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="long">Long-term</option>
+            <option value="short">Short-term</option>
+          </select>
         </div>
-
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5">
-          <h2 class="text-sm font-semibold mb-1">Traffic sources</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Share of sessions by channel</p>
-          <div class="h-44 flex items-center justify-center">
-            <canvas id="trafficChart" role="img" aria-label="Donut chart showing traffic split across direct, search, social, and referral channels"></canvas>
-          </div>
-          <ul class="mt-3 space-y-2 text-sm">
-            <li class="flex items-center justify-between">
-              <span class="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span class="h-2 w-2 rounded-full" style="background:#1E40AF"></span>Direct</span>
-              <span class="font-mono tabular-nums text-slate-500 dark:text-slate-400">42%</span>
-            </li>
-            <li class="flex items-center justify-between">
-              <span class="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span class="h-2 w-2 rounded-full" style="background:#3B82F6"></span>Search</span>
-              <span class="font-mono tabular-nums text-slate-500 dark:text-slate-400">28%</span>
-            </li>
-            <li class="flex items-center justify-between">
-              <span class="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span class="h-2 w-2 rounded-full" style="background:#F59E0B"></span>Social</span>
-              <span class="font-mono tabular-nums text-slate-500 dark:text-slate-400">19%</span>
-            </li>
-            <li class="flex items-center justify-between">
-              <span class="flex items-center gap-2 text-slate-600 dark:text-slate-300"><span class="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-700"></span>Referral</span>
-              <span class="font-mono tabular-nums text-slate-500 dark:text-slate-400">11%</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Table + activity -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div class="xl:col-span-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
-          <div class="flex items-center justify-between px-4 sm:px-5 py-4">
-            <h2 class="text-sm font-semibold">Recent orders</h2>
-            <a href="orders.html" class="text-sm font-medium text-primary dark:text-primary-light hover:underline cursor-pointer">View all</a>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <caption class="sr-only">Recent orders with customer, status, and amount</caption>
-              <thead>
-                <tr class="border-y border-slate-200 dark:border-slate-800 text-left text-xs text-slate-500 dark:text-slate-400">
-                  <th scope="col" class="font-medium px-4 sm:px-5 py-2.5">Order</th>
-                  <th scope="col" class="font-medium px-4 py-2.5">Customer</th>
-                  <th scope="col" class="font-medium px-4 py-2.5">Status</th>
-                  <th scope="col" class="font-medium px-4 sm:px-5 py-2.5 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150">
-                  <td class="px-4 sm:px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">#8821</td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2.5">
-                      <img src="https://api.dicebear.com/9.x/notionists/svg?seed=Owen" alt="" class="h-7 w-7 rounded-full bg-slate-200" width="28" height="28" />
-                      <span class="font-medium">Owen Brooks</span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">Paid</span></td>
-                  <td class="px-4 sm:px-5 py-3 text-right font-mono tabular-nums">$249.00</td>
-                </tr>
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150">
-                  <td class="px-4 sm:px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">#8820</td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2.5">
-                      <img src="https://api.dicebear.com/9.x/notionists/svg?seed=Priya" alt="" class="h-7 w-7 rounded-full bg-slate-200" width="28" height="28" />
-                      <span class="font-medium">Priya Nair</span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">Pending</span></td>
-                  <td class="px-4 sm:px-5 py-3 text-right font-mono tabular-nums">$1,180.00</td>
-                </tr>
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150">
-                  <td class="px-4 sm:px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">#8819</td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2.5">
-                      <img src="https://api.dicebear.com/9.x/notionists/svg?seed=Diego" alt="" class="h-7 w-7 rounded-full bg-slate-200" width="28" height="28" />
-                      <span class="font-medium">Diego Fernandez</span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">Paid</span></td>
-                  <td class="px-4 sm:px-5 py-3 text-right font-mono tabular-nums">$76.50</td>
-                </tr>
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150">
-                  <td class="px-4 sm:px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">#8818</td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2.5">
-                      <img src="https://api.dicebear.com/9.x/notionists/svg?seed=Freya" alt="" class="h-7 w-7 rounded-full bg-slate-200" width="28" height="28" />
-                      <span class="font-medium">Freya Lindqvist</span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400">Refunded</span></td>
-                  <td class="px-4 sm:px-5 py-3 text-right font-mono tabular-nums">$312.00</td>
-                </tr>
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150">
-                  <td class="px-4 sm:px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">#8817</td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2.5">
-                      <img src="https://api.dicebear.com/9.x/notionists/svg?seed=Kenji" alt="" class="h-7 w-7 rounded-full bg-slate-200" width="28" height="28" />
-                      <span class="font-medium">Kenji Watanabe</span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">Paid</span></td>
-                  <td class="px-4 sm:px-5 py-3 text-right font-mono tabular-nums">$540.25</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-semibold">Activity</h2>
-            <a href="reports.html" class="text-sm font-medium text-primary dark:text-primary-light hover:underline cursor-pointer">See all</a>
-          </div>
-          <ol class="space-y-4">
-            <li class="flex gap-3">
-              <span class="h-7 w-7 rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              </span>
-              <div class="min-w-0">
-                <p class="text-sm">Payment received from <span class="font-medium">Owen Brooks</span></p>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">2 minutes ago</p>
-              </div>
-            </li>
-            <li class="flex gap-3">
-              <span class="h-7 w-7 rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light flex items-center justify-center shrink-0 mt-0.5">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              </span>
-              <div class="min-w-0">
-                <p class="text-sm"><span class="font-medium">Priya Nair</span> created a new account</p>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">38 minutes ago</p>
-              </div>
-            </li>
-            <li class="flex gap-3">
-              <span class="h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-              </span>
-              <div class="min-w-0">
-                <p class="text-sm">Ticket <span class="font-medium">#4471</span> flagged as urgent</p>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">1 hour ago</p>
-              </div>
-            </li>
-            <li class="flex gap-3">
-              <span class="h-7 w-7 rounded-full bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V4h6v2M8 6l1 14h6l1-14"/></svg>
-              </span>
-              <div class="min-w-0">
-                <p class="text-sm">Order <span class="font-medium">#8818</span> was refunded</p>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">3 hours ago</p>
-              </div>
-            </li>
-            <li class="flex gap-3">
-              <span class="h-7 w-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-              </span>
-              <div class="min-w-0">
-                <p class="text-sm">Weekly report generated automatically</p>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Yesterday, 6:00 AM</p>
-              </div>
-            </li>
-          </ol>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Deadline <span class="font-normal text-slate-400">(optional)</span></label>
+          <input id="goal-deadline" type="date" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
         </div>
       </div>
-
-    </main>
-
-    <footer class="px-4 sm:px-6 py-5 text-xs text-slate-400 dark:text-slate-500 text-center">
-      Pulse Dashboard · Data refreshed a few seconds ago
-    </footer>
+      <div class="flex items-center gap-2 pt-2">
+        <button type="submit" class="flex-1 text-sm font-semibold bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-light transition-colors">Save Goal</button>
+        <button type="button" data-close-modal class="text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+      </div>
+    </form>
   </div>
 </div>
 
-<script>
-  // Theme: persisted + system default
-  (function () {
-    var root = document.documentElement;
-    var sun = document.getElementById('theme-icon-sun');
-    var moon = document.getElementById('theme-icon-moon');
-    function apply(isDark) {
-      root.classList.toggle('dark', isDark);
-      if (sun && moon) { sun.classList.toggle('hidden', !isDark); moon.classList.toggle('hidden', isDark); }
-    }
-    var stored = null;
-    try { stored = localStorage.getItem('pulse-theme'); } catch (e) {}
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    apply(stored ? stored === 'dark' : prefersDark);
+<!-- Move-to-schedule modal -->
+<div id="move-modal" class="app-hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
+  <div class="relative bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 sm:p-6 shadow-xl fade-in">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">Add to Schedule</h2>
+      <button data-close-modal class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="move-form" class="space-y-4">
+      <input type="hidden" id="move-goal-id" />
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Task title</label>
+        <input id="move-title" required type="text" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Date</label>
+          <input id="move-date" required type="date" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Time <span class="font-normal text-slate-400">(optional)</span></label>
+          <input id="move-time" type="time" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-2">
+        <button type="submit" class="flex-1 text-sm font-semibold bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-light transition-colors">Add to Schedule</button>
+        <button type="button" data-close-modal class="text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-    var toggle = document.getElementById('theme-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function () {
-        var isDark = !root.classList.contains('dark');
-        apply(isDark);
-        try { localStorage.setItem('pulse-theme', isDark ? 'dark' : 'light'); } catch (e) {}
-      });
-    }
-  })();
+<!-- Task modal -->
+<div id="task-modal" class="app-hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
+  <div class="relative bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 sm:p-6 shadow-xl fade-in">
+    <div class="flex items-center justify-between mb-4">
+      <h2 id="task-modal-title" class="text-lg font-bold">Add Task</h2>
+      <button data-close-modal class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="task-form" class="space-y-4">
+      <input type="hidden" id="task-id" />
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Task</label>
+        <input id="task-title" required type="text" placeholder="e.g. Write project brief" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Date</label>
+          <input id="task-date" required type="date" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Time <span class="font-normal text-slate-400">(optional)</span></label>
+          <input id="task-time" type="time" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-2">
+        <button type="submit" class="flex-1 text-sm font-semibold bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-light transition-colors">Save Task</button>
+        <button type="button" data-close-modal class="text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-  // Mobile nav
-  (function () {
-    var panel = document.getElementById('mobile-nav');
-    var openBtn = document.getElementById('open-mobile-nav');
-    var closeBtn = document.getElementById('close-mobile-nav');
-    var overlay = document.getElementById('mobile-nav-overlay');
-    function open() { panel.classList.remove('hidden'); openBtn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
-    function close() { panel.classList.add('hidden'); openBtn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
-    openBtn.addEventListener('click', open);
-    closeBtn.addEventListener('click', close);
-    overlay.addEventListener('click', close);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
-  })();
+<!-- Confirm dialog -->
+<div id="confirm-modal" class="app-hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
+  <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-xs p-5 shadow-xl fade-in text-center">
+    <p id="confirm-text" class="text-sm mb-4">Are you sure?</p>
+    <div class="flex items-center gap-2">
+      <button id="confirm-yes" class="flex-1 text-sm font-semibold bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-500 transition-colors">Delete</button>
+      <button id="confirm-no" class="flex-1 text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+    </div>
+  </div>
+</div>
 
-  // Charts
-  (function () {
-    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var isDark = document.documentElement.classList.contains('dark');
-    var gridColor = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.2)';
-    var tickColor = isDark ? '#94A3B8' : '#64748B';
+<!-- Toast -->
+<div id="toast" class="app-hidden fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-lg shadow-lg fade-in"></div>
 
-    Chart.defaults.font.family = "'Fira Sans', ui-sans-serif, system-ui";
-    Chart.defaults.animation = reduceMotion ? false : { duration: 400 };
-
-    var labels = Array.from({ length: 30 }, function (_, i) { return 'D' + (i + 1); });
-    var thisPeriod = [42,45,41,48,52,49,55,58,54,60,63,59,65,68,64,70,72,69,75,78,74,80,83,79,85,88,84,90,93,89].map(function (v) { return v * 950; });
-    var prevPeriod = thisPeriod.map(function (v) { return Math.round(v * (0.78 + Math.random() * 0.08)); });
-
-    new Chart(document.getElementById('revenueChart'), {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          { label: 'This period', data: thisPeriod, borderColor: '#1E40AF', backgroundColor: 'rgba(30,64,175,0.08)', fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2 },
-          { label: 'Previous', data: prevPeriod, borderColor: isDark ? '#475569' : '#CBD5E1', backgroundColor: 'transparent', fill: false, tension: 0.35, pointRadius: 0, borderWidth: 2, borderDash: [4, 4] },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: { label: function (ctx) { return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString(); } },
-          },
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { display: false } },
-          y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: function (v) { return '$' + (v / 1000) + 'k'; } }, border: { display: false } },
-        },
-      },
-    });
-
-    new Chart(document.getElementById('trafficChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Direct', 'Search', 'Social', 'Referral'],
-        datasets: [{ data: [42, 28, 19, 11], backgroundColor: ['#1E40AF', '#3B82F6', '#F59E0B', isDark ? '#334155' : '#CBD5E1'], borderWidth: 0 }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '72%',
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (ctx) { return ctx.label + ': ' + ctx.parsed + '%'; } } } },
-      },
-    });
-  })();
-</script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
