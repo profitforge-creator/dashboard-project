@@ -10,7 +10,7 @@ export function ApplicationShell({ children, rightPanel }: ApplicationShellProps
   return (
     <div className="flex min-h-dvh bg-bg">
       <DesktopSidebar />
-      <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-0">
+      <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-0 lg:pl-20">
         <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
       </main>
       {rightPanel && (

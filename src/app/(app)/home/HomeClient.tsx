@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ChatSheet } from "@/components/ChatSheet";
 import { QuickAdd } from "@/components/QuickAdd";
 import { NextTaskSquare } from "@/components/NextTaskSquare";
+import { StatPillButton } from "@/components/StatPillButton";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 
@@ -159,6 +160,14 @@ export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSes
       <NextTaskSquare task={nextTask} />
 
       <TimelineChart blocks={timelineBlocks} />
+
+      <StatPillButton
+        href="/finance"
+        value={financeRunwayDays === null ? "—" : `${financeRunwayDays}d`}
+        label="Finance runway"
+        progress={financeRunwayDays === null ? 0 : Math.max(0, Math.min(100, (financeRunwayDays / 90) * 100))}
+        accent={financeRunwayDays !== null && financeRunwayDays < 14 ? "error" : financeRunwayDays !== null && financeRunwayDays < 30 ? "warning" : "success"}
+      />
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-text">Shortcuts</h2>

@@ -9,6 +9,7 @@ import { SegmentedControl } from "@/components/SegmentedControl";
 import { FilterPills } from "@/components/FilterPills";
 import { EmptyState } from "@/components/EmptyState";
 import { ProgressRing } from "@/components/ProgressRing";
+import { FinanceStatCard } from "@/components/FinanceStatCard";
 import { Sheet } from "@/components/Sheet";
 import { ChatSheet } from "@/components/ChatSheet";
 import { createClient } from "@/lib/supabase/client";
@@ -135,6 +136,20 @@ export function FinanceClient({ transactions, period, categories, financialGoals
   const savingsAllocated = categoryActuals["savings"] ?? 0;
   const investmentAllocated = categoryActuals["investing"] ?? 0;
   const debtObligations = categoryActuals["debt"] ?? 0;
+
+  const SPENDING_TYPES: TransactionType[] = ["expense", "debt_payment", "recurring_bill"];
+  const last7DaysSpend = Array.from({ length: 7 }).map((_, i) => {
+    const dayStart = new Date(now);
+    dayStart.setDate(dayStart.getDate() - (6 - i));
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+    return round2(
+      transactions
+        .filter((t) => SPENDING_TYPES.includes(t.type) && new Date(t.occurred_at) >= dayStart && new Date(t.occurred_at) <= dayEnd)
+        .reduce((s, t) => s + t.amount, 0)
+    );
+  });
 
   const emergencyGoal = financialGoals.find((g) => g.kind === "emergency_fund");
 
@@ -371,6 +386,15 @@ export function FinanceClient({ transactions, period, categories, financialGoals
             <MetricCard icon={Wallet} label="Investing" value={investmentAllocated} format={currency} />
             <MetricCard icon={Wallet} label="Debt obligations" value={debtObligations} format={currency} />
           </div>
+
+          <FinanceStatCard
+            label="Recent daily spend"
+            value={currency(rates.recentActualDailyBurn)}
+            subLabel="Average over last 7 days · vs. baseline burn"
+            trendPct={rates.dailyBaselineBurn > 0 ? `${Math.round((Math.abs(rates.recentActualDailyBurn - rates.dailyBaselineBurn) / rates.dailyBaselineBurn) * 100)}%` : undefined}
+            trendDirection={rates.recentActualDailyBurn <= rates.dailyBaselineBurn ? "up" : "down"}
+            bars={last7DaysSpend}
+          />
 
           <div className="rounded-2xl border border-border bg-card p-5">
             <div className="mb-3 flex items-center justify-between">
