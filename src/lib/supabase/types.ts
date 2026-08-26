@@ -237,6 +237,67 @@ export interface HealthSyncToken {
   created_at: string;
 }
 
+export interface FitnessProfile {
+  user_id: string;
+  goal_description: string;
+  height_cm: number | null;
+  current_weight_kg: number | null;
+  target_weight_kg: number | null;
+  target_date: string | null;
+  dream_photo_url: string | null;
+  updated_at: string;
+}
+
+export interface FitnessProgressPhoto {
+  id: string;
+  user_id: string;
+  photo_url: string;
+  taken_on: string;
+  weight_kg: number | null;
+  notes: string;
+  created_at: string;
+}
+
+export interface FitnessAnalysis {
+  id: string;
+  user_id: string;
+  source_photo_url: string;
+  analysis_text: string;
+  focus_areas: string[];
+  estimated_weeks: number | null;
+  next_steps: string[];
+  created_at: string;
+}
+
+export interface WorkoutRoutine {
+  id: string;
+  user_id: string;
+  name: string;
+  active: boolean;
+  created_at: string;
+}
+
+export interface WorkoutExercise {
+  id: string;
+  user_id: string;
+  routine_id: string;
+  name: string;
+  sets: number | null;
+  reps: string;
+  notes: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface WorkoutCompletion {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  log_date: string;
+  completed: boolean;
+  created_at: string;
+}
+
 export interface OnboardingResponse {
   id: string;
   user_id: string;

@@ -10,9 +10,9 @@ export function DesktopSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-5 top-1/2 z-40 hidden -translate-y-1/2 lg:block">
+    <aside className="fixed left-5 top-1/2 z-40 hidden max-h-[calc(100vh-40px)] -translate-y-1/2 lg:block">
       <nav
-        className="flex flex-col items-center gap-1 rounded-full border border-border bg-card/80 p-2 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+        className="flex max-h-[calc(100vh-40px)] flex-col items-center gap-1 overflow-y-auto rounded-full border border-border bg-card/80 p-2 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
         aria-label="Primary"
       >
         <Link
