@@ -245,7 +245,17 @@ export interface FitnessProfile {
   target_weight_kg: number | null;
   target_date: string | null;
   dream_photo_url: string | null;
+  rotation_anchor_date: string | null;
+  rotation_anchor_index: number | null;
   updated_at: string;
+}
+
+export interface SplitRotationDay {
+  id: string;
+  user_id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
 }
 
 export interface FitnessProgressPhoto {

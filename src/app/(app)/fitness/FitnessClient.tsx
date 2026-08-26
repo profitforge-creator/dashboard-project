@@ -2,15 +2,17 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Sparkles, Target, Dumbbell, Plus, Check, Trash2, Image as ImageIcon } from "lucide-react";
-import type { FitnessProfile, FitnessProgressPhoto, FitnessAnalysis, WorkoutRoutine, WorkoutExercise, WorkoutCompletion } from "@/lib/supabase/types";
+import { Camera, Sparkles, Target, Dumbbell, Plus, Check, Trash2, Image as ImageIcon, RefreshCw, Pencil } from "lucide-react";
+import type { FitnessProfile, FitnessProgressPhoto, FitnessAnalysis, WorkoutRoutine, WorkoutExercise, WorkoutCompletion, SplitRotationDay } from "@/lib/supabase/types";
 import { AreaChart } from "@/components/AreaChart";
 import { EmptyState } from "@/components/EmptyState";
 import { Sheet } from "@/components/Sheet";
 import { Button } from "@/components/Button";
+import { SplitRotationSheet } from "@/components/SplitRotationSheet";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmationDialog";
+import { computeRotationTodayIndex } from "@/lib/rotation";
 
 interface FitnessClientProps {
   profile: FitnessProfile | null;
@@ -19,6 +21,7 @@ interface FitnessClientProps {
   routine: WorkoutRoutine | null;
   exercises: WorkoutExercise[];
   todayCompletions: WorkoutCompletion[];
+  rotationDays: SplitRotationDay[];
   today: string;
 }
 
@@ -37,10 +40,14 @@ async function uploadPhoto(file: File, userId: string, subfolder: string): Promi
   return data.publicUrl;
 }
 
-export function FitnessClient({ profile, photos, latestAnalysis, routine, exercises, todayCompletions, today }: FitnessClientProps) {
+export function FitnessClient({ profile, photos, latestAnalysis, routine, exercises, todayCompletions, rotationDays, today }: FitnessClientProps) {
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
+
+  const [rotationSheetOpen, setRotationSheetOpen] = useState(false);
+  const todayRotationIndex = computeRotationTodayIndex(rotationDays.length, profile?.rotation_anchor_date ?? null, profile?.rotation_anchor_index ?? null, today);
+  const todayRotationDay = todayRotationIndex != null ? rotationDays[todayRotationIndex] : null;
 
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -340,6 +347,24 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
         )}
       </section>
 
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <RefreshCw className="h-4 w-4 flex-shrink-0 text-blue-light" strokeWidth={2} />
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Split rotation</p>
+              <p className="text-sm font-semibold text-text">{todayRotationDay ? `Today: ${todayRotationDay.name}` : "Not set up yet"}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setRotationSheetOpen(true)}
+            className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-blue-light hover:bg-card-secondary"
+          >
+            <Pencil className="h-3.5 w-3.5" strokeWidth={2} /> {rotationDays.length ? "Edit" : "Set up"}
+          </button>
+        </div>
+      </section>
+
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
@@ -571,6 +596,15 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
           </Button>
         </form>
       </Sheet>
+
+      <SplitRotationSheet
+        open={rotationSheetOpen}
+        onClose={() => setRotationSheetOpen(false)}
+        days={rotationDays}
+        anchorDate={profile?.rotation_anchor_date ?? null}
+        anchorIndex={profile?.rotation_anchor_index ?? null}
+        onSaved={() => router.refresh()}
+      />
     </div>
   );
 }

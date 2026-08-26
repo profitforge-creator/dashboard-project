@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/utils";
 import { FitnessClient } from "./FitnessClient";
-import type { FitnessProfile, FitnessProgressPhoto, FitnessAnalysis, WorkoutRoutine, WorkoutExercise, WorkoutCompletion } from "@/lib/supabase/types";
+import type { FitnessProfile, FitnessProgressPhoto, FitnessAnalysis, WorkoutRoutine, WorkoutExercise, WorkoutCompletion, SplitRotationDay } from "@/lib/supabase/types";
 
 export default async function FitnessPage() {
   const supabase = await createClient();
@@ -9,11 +9,12 @@ export default async function FitnessPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [profileRes, photosRes, analysesRes, routineRes] = await Promise.all([
+  const [profileRes, photosRes, analysesRes, routineRes, rotationRes] = await Promise.all([
     supabase.from("fitness_profile").select("*").eq("user_id", user!.id).maybeSingle(),
     supabase.from("fitness_progress_photos").select("*").eq("user_id", user!.id).order("taken_on", { ascending: true }),
     supabase.from("fitness_analyses").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1),
     supabase.from("workout_routines").select("*").eq("user_id", user!.id).eq("active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("split_rotation_days").select("*").eq("user_id", user!.id).order("sort_order", { ascending: true }),
   ]);
 
   const routine = (routineRes.data ?? null) as WorkoutRoutine | null;
@@ -33,6 +34,7 @@ export default async function FitnessPage() {
       routine={routine}
       exercises={(exercisesRes.data ?? []) as WorkoutExercise[]}
       todayCompletions={(completionsRes.data ?? []) as WorkoutCompletion[]}
+      rotationDays={(rotationRes.data ?? []) as SplitRotationDay[]}
       today={todayISO()}
     />
   );
