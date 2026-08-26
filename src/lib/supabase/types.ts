@@ -200,6 +200,43 @@ export interface FinancialGoal {
   completed_at: string | null;
 }
 
+export interface HealthLog {
+  id: string;
+  user_id: string;
+  log_date: string;
+  steps: number | null;
+  sleep_hours: number | null;
+  sleep_quality: number | null;
+  notes: string;
+  source: "manual" | "shortcut";
+  created_at: string;
+}
+
+export interface Supplement {
+  id: string;
+  user_id: string;
+  name: string;
+  dosage: string;
+  schedule_note: string;
+  active: boolean;
+  created_at: string;
+}
+
+export interface SupplementLog {
+  id: string;
+  user_id: string;
+  supplement_id: string;
+  log_date: string;
+  taken: boolean;
+  created_at: string;
+}
+
+export interface HealthSyncToken {
+  user_id: string;
+  token: string;
+  created_at: string;
+}
+
 export interface OnboardingResponse {
   id: string;
   user_id: string;
