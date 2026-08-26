@@ -298,6 +298,60 @@ export interface WorkoutCompletion {
   created_at: string;
 }
 
+export type BusinessIdeaStatus = "idea" | "validating" | "building" | "shipped" | "archived";
+export interface BusinessIdea {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  status: BusinessIdeaStatus;
+  created_at: string;
+}
+
+export type BusinessAppStatus = "in_progress" | "shipped" | "paused";
+export interface BusinessApp {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  completion_pct: number;
+  status: BusinessAppStatus;
+  notes: string;
+  created_at: string;
+}
+
+export type BusinessModelStatus = "active" | "paused" | "archived";
+export interface BusinessModel {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  revenue_model: string;
+  status: BusinessModelStatus;
+  created_at: string;
+}
+
+export type SocialPlatform = "x" | "instagram" | "tiktok" | "youtube" | "other";
+export interface SocialAccount {
+  id: string;
+  user_id: string;
+  platform: SocialPlatform;
+  handle: string;
+  created_at: string;
+}
+
+export interface SocialMetricsLog {
+  id: string;
+  user_id: string;
+  account_id: string;
+  log_date: string;
+  followers: number | null;
+  organic_views: number | null;
+  ad_views: number | null;
+  ad_cost: number | null;
+  created_at: string;
+}
+
 export interface OnboardingResponse {
   id: string;
   user_id: string;
