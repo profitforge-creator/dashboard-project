@@ -2,8 +2,21 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Edit2, Trash2, Wallet, TrendingDown, TrendingUp, PiggyBank, Target, Sparkles } from "lucide-react";
-import type { Transaction, TransactionType, TransactionCategory, BudgetPeriod, BudgetCategoryAllocation, BudgetCategoryKey, FinancialGoal, FinancialGoalKind } from "@/lib/supabase/types";
+import { Plus, Search, Edit2, Trash2, Wallet, TrendingDown, TrendingUp, PiggyBank, Target, Sparkles, Package, Heart, ExternalLink } from "lucide-react";
+import type {
+  Transaction,
+  TransactionType,
+  TransactionCategory,
+  BudgetPeriod,
+  BudgetCategoryAllocation,
+  BudgetCategoryKey,
+  FinancialGoal,
+  FinancialGoalKind,
+  Order,
+  OrderStatus,
+  WishlistItem,
+  WishlistPriority,
+} from "@/lib/supabase/types";
 import { MetricCard } from "@/components/MetricCard";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { FilterPills } from "@/components/FilterPills";
@@ -25,7 +38,16 @@ import {
   BUDGET_CATEGORY_LABEL,
 } from "@/lib/finance";
 
-type Tab = "overview" | "transactions" | "budget" | "goals" | "scenarios";
+type Tab = "overview" | "transactions" | "budget" | "goals" | "scenarios" | "orders" | "wishlist";
+
+const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  ordered: "Ordered",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  returned: "Returned",
+  cancelled: "Cancelled",
+};
+const WISHLIST_PRIORITY_LABEL: Record<WishlistPriority, string> = { low: "Low", medium: "Medium", high: "High" };
 
 const TX_TYPE_LABEL: Record<TransactionType, string> = {
   income: "Income",
@@ -88,14 +110,32 @@ const emptyGoalForm = {
   deadline: "",
 };
 
+const emptyOrderForm = {
+  item: "",
+  merchant: "",
+  amount: "",
+  status: "ordered" as OrderStatus,
+  ordered_at: new Date().toISOString().slice(0, 10),
+  tracking_note: "",
+};
+
+const emptyWishlistForm = {
+  item: "",
+  url: "",
+  estimated_price: "",
+  priority: "medium" as WishlistPriority,
+};
+
 interface FinanceClientProps {
   transactions: Transaction[];
   period: BudgetPeriod | null;
   categories: BudgetCategoryAllocation[];
   financialGoals: FinancialGoal[];
+  orders: Order[];
+  wishlist: WishlistItem[];
 }
 
-export function FinanceClient({ transactions, period, categories, financialGoals }: FinanceClientProps) {
+export function FinanceClient({ transactions, period, categories, financialGoals, orders, wishlist }: FinanceClientProps) {
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
@@ -110,6 +150,14 @@ export function FinanceClient({ transactions, period, categories, financialGoals
   const [goalSheetOpen, setGoalSheetOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<FinancialGoal | null>(null);
   const [goalForm, setGoalForm] = useState(emptyGoalForm);
+
+  const [orderSheetOpen, setOrderSheetOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [orderForm, setOrderForm] = useState(emptyOrderForm);
+
+  const [wishlistSheetOpen, setWishlistSheetOpen] = useState(false);
+  const [editingWishlistItem, setEditingWishlistItem] = useState<WishlistItem | null>(null);
+  const [wishlistForm, setWishlistForm] = useState(emptyWishlistForm);
 
   const [chatMessage, setChatMessage] = useState<string | undefined>(undefined);
   const [chatOpen, setChatOpen] = useState(false);
@@ -338,6 +386,121 @@ export function FinanceClient({ transactions, period, categories, financialGoals
     setChatOpen(true);
   }
 
+  // ---------- Orders ----------
+  function openNewOrder() {
+    setEditingOrder(null);
+    setOrderForm(emptyOrderForm);
+    setOrderSheetOpen(true);
+  }
+  function openEditOrder(o: Order) {
+    setEditingOrder(o);
+    setOrderForm({
+      item: o.item,
+      merchant: o.merchant,
+      amount: String(o.amount),
+      status: o.status,
+      ordered_at: o.ordered_at,
+      tracking_note: o.tracking_note,
+    });
+    setOrderSheetOpen(true);
+  }
+  async function saveOrder(e: React.FormEvent) {
+    e.preventDefault();
+    if (!orderForm.item.trim()) {
+      toast("Enter what you ordered.", "error");
+      return;
+    }
+    const supabase = createClient();
+    const payload = {
+      item: orderForm.item.trim(),
+      merchant: orderForm.merchant.trim(),
+      amount: Number(orderForm.amount) || 0,
+      status: orderForm.status,
+      ordered_at: orderForm.ordered_at,
+      tracking_note: orderForm.tracking_note.trim(),
+    };
+    if (editingOrder) {
+      const { error } = await supabase.from("orders").update(payload).eq("id", editingOrder.id);
+      if (error) return toast("Could not save the order.", "error");
+      toast("Order updated");
+    } else {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const { error } = await supabase.from("orders").insert({ ...payload, user_id: user!.id });
+      if (error) return toast("Could not save the order.", "error");
+      toast("Order added");
+    }
+    setOrderSheetOpen(false);
+    router.refresh();
+  }
+  async function deleteOrder(o: Order) {
+    const ok = await confirm({ title: "Delete this order?", description: o.item, confirmLabel: "Delete", danger: true });
+    if (!ok) return;
+    const supabase = createClient();
+    await supabase.from("orders").delete().eq("id", o.id);
+    toast("Order deleted");
+    router.refresh();
+  }
+
+  // ---------- Wishlist ----------
+  function openNewWishlistItem() {
+    setEditingWishlistItem(null);
+    setWishlistForm(emptyWishlistForm);
+    setWishlistSheetOpen(true);
+  }
+  function openEditWishlistItem(w: WishlistItem) {
+    setEditingWishlistItem(w);
+    setWishlistForm({
+      item: w.item,
+      url: w.url,
+      estimated_price: w.estimated_price != null ? String(w.estimated_price) : "",
+      priority: w.priority,
+    });
+    setWishlistSheetOpen(true);
+  }
+  async function saveWishlistItem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!wishlistForm.item.trim()) {
+      toast("Enter an item name.", "error");
+      return;
+    }
+    const supabase = createClient();
+    const payload = {
+      item: wishlistForm.item.trim(),
+      url: wishlistForm.url.trim(),
+      estimated_price: wishlistForm.estimated_price ? Number(wishlistForm.estimated_price) : null,
+      priority: wishlistForm.priority,
+    };
+    if (editingWishlistItem) {
+      const { error } = await supabase.from("wishlist_items").update(payload).eq("id", editingWishlistItem.id);
+      if (error) return toast("Could not save the item.", "error");
+      toast("Wishlist item updated");
+    } else {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const { error } = await supabase.from("wishlist_items").insert({ ...payload, user_id: user!.id });
+      if (error) return toast("Could not save the item.", "error");
+      toast("Added to wishlist");
+    }
+    setWishlistSheetOpen(false);
+    router.refresh();
+  }
+  async function toggleWishlistPurchased(w: WishlistItem) {
+    const supabase = createClient();
+    await supabase.from("wishlist_items").update({ purchased: !w.purchased }).eq("id", w.id);
+    router.refresh();
+  }
+  async function deleteWishlistItem(w: WishlistItem) {
+    const ok = await confirm({ title: "Remove from wishlist?", description: w.item, confirmLabel: "Remove", danger: true });
+    if (!ok) return;
+    const supabase = createClient();
+    await supabase.from("wishlist_items").delete().eq("id", w.id);
+    toast("Removed from wishlist");
+    router.refresh();
+  }
+
   // ---------- Scenario ----------
   const scenario = computeScenarioRunway(rates, {
     incomeDelta: Number(scenarioIncome) || 0,
@@ -367,6 +530,8 @@ export function FinanceClient({ transactions, period, categories, financialGoals
             { value: "budget", label: "Budget" },
             { value: "goals", label: "Goals" },
             { value: "scenarios", label: "Scenarios" },
+            { value: "orders", label: "Orders" },
+            { value: "wishlist", label: "Wishlist" },
           ]}
         />
       </div>
@@ -644,6 +809,93 @@ export function FinanceClient({ transactions, period, categories, financialGoals
         </div>
       )}
 
+      {tab === "orders" && (
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <button onClick={openNewOrder} className="flex min-h-10 items-center gap-1.5 rounded-xl border border-border px-3.5 text-sm font-semibold text-text hover:bg-card">
+              <Plus className="h-4 w-4" /> Add Order
+            </button>
+          </div>
+          {orders.length === 0 ? (
+            <EmptyState icon={Package} title="No orders tracked" description="Log anything you've bought to keep tabs on where it's at." />
+          ) : (
+            orders.map((o) => (
+              <div key={o.id} className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-text">{o.item}</p>
+                    <p className="mt-0.5 text-xs text-text-secondary">
+                      {o.merchant && `${o.merchant} · `}
+                      {currency(o.amount)} · {new Date(o.ordered_at).toLocaleDateString()}
+                    </p>
+                    <span className="mt-2 inline-block rounded-full border border-border-strong px-2 py-0.5 text-[10px] uppercase tracking-wide text-blue-light">
+                      {ORDER_STATUS_LABEL[o.status]}
+                    </span>
+                    {o.tracking_note && <p className="mt-1.5 text-xs text-text-secondary">{o.tracking_note}</p>}
+                  </div>
+                  <div className="flex flex-shrink-0 items-center gap-0.5">
+                    <button onClick={() => openEditOrder(o)} className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-card-secondary hover:text-text">
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => deleteOrder(o)} className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-error/10 hover:text-error">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {tab === "wishlist" && (
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <button onClick={openNewWishlistItem} className="flex min-h-10 items-center gap-1.5 rounded-xl border border-border px-3.5 text-sm font-semibold text-text hover:bg-card">
+              <Plus className="h-4 w-4" /> Add to Wishlist
+            </button>
+          </div>
+          {wishlist.length === 0 ? (
+            <EmptyState icon={Heart} title="Wishlist is empty" description="Save anything you're thinking about buying." />
+          ) : (
+            wishlist.map((w) => (
+              <div key={w.id} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+                <button
+                  onClick={() => toggleWishlistPurchased(w)}
+                  aria-label={w.purchased ? "Mark as not purchased" : "Mark as purchased"}
+                  className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                    w.purchased ? "border-success bg-success text-bg" : "border-border-strong text-transparent"
+                  }`}
+                >
+                  ✓
+                </button>
+                <div className="min-w-0 flex-1">
+                  <p className={`truncate text-sm font-medium ${w.purchased ? "text-text-secondary line-through" : "text-text"}`}>{w.item}</p>
+                  <p className="mt-0.5 text-xs text-text-secondary">
+                    {w.estimated_price != null && currency(w.estimated_price)}
+                    {w.estimated_price != null && " · "}
+                    {WISHLIST_PRIORITY_LABEL[w.priority]} priority
+                  </p>
+                  {w.url && (
+                    <a href={w.url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-blue-light hover:underline">
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-0.5">
+                  <button onClick={() => openEditWishlistItem(w)} className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-card-secondary hover:text-text">
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => deleteWishlistItem(w)} className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-error/10 hover:text-error">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       {/* Transaction sheet */}
       <Sheet open={txSheetOpen} onClose={() => setTxSheetOpen(false)} title={editingTx ? "Edit Transaction" : "Add Transaction"}>
         <form onSubmit={saveTx} className="space-y-4">
@@ -748,6 +1000,137 @@ export function FinanceClient({ transactions, period, categories, financialGoals
           </div>
           <button type="submit" className="min-h-11 w-full rounded-xl bg-blue text-sm font-semibold text-white transition-colors hover:bg-blue/90">
             {editingGoal ? "Save changes" : "Create goal"}
+          </button>
+        </form>
+      </Sheet>
+
+      {/* Order sheet */}
+      <Sheet open={orderSheetOpen} onClose={() => setOrderSheetOpen(false)} title={editingOrder ? "Edit Order" : "Add Order"}>
+        <form onSubmit={saveOrder} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Item</label>
+            <input
+              type="text"
+              required
+              value={orderForm.item}
+              onChange={(e) => setOrderForm((f) => ({ ...f, item: e.target.value }))}
+              className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Merchant</label>
+              <input
+                type="text"
+                value={orderForm.merchant}
+                onChange={(e) => setOrderForm((f) => ({ ...f, merchant: e.target.value }))}
+                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Amount</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={orderForm.amount}
+                onChange={(e) => setOrderForm((f) => ({ ...f, amount: e.target.value }))}
+                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Status</label>
+              <select
+                value={orderForm.status}
+                onChange={(e) => setOrderForm((f) => ({ ...f, status: e.target.value as OrderStatus }))}
+                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+              >
+                {Object.entries(ORDER_STATUS_LABEL).map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Ordered on</label>
+              <input
+                type="date"
+                value={orderForm.ordered_at}
+                onChange={(e) => setOrderForm((f) => ({ ...f, ordered_at: e.target.value }))}
+                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Tracking / notes</label>
+            <textarea
+              value={orderForm.tracking_note}
+              onChange={(e) => setOrderForm((f) => ({ ...f, tracking_note: e.target.value }))}
+              rows={2}
+              className="w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none focus:border-blue"
+            />
+          </div>
+          <button type="submit" className="min-h-11 w-full rounded-xl bg-blue text-sm font-semibold text-white transition-colors hover:bg-blue/90">
+            {editingOrder ? "Save changes" : "Add order"}
+          </button>
+        </form>
+      </Sheet>
+
+      {/* Wishlist sheet */}
+      <Sheet open={wishlistSheetOpen} onClose={() => setWishlistSheetOpen(false)} title={editingWishlistItem ? "Edit Wishlist Item" : "Add to Wishlist"}>
+        <form onSubmit={saveWishlistItem} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Item</label>
+            <input
+              type="text"
+              required
+              value={wishlistForm.item}
+              onChange={(e) => setWishlistForm((f) => ({ ...f, item: e.target.value }))}
+              className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Link (optional)</label>
+            <input
+              type="url"
+              value={wishlistForm.url}
+              onChange={(e) => setWishlistForm((f) => ({ ...f, url: e.target.value }))}
+              placeholder="https://…"
+              className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Estimated price</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={wishlistForm.estimated_price}
+                onChange={(e) => setWishlistForm((f) => ({ ...f, estimated_price: e.target.value }))}
+                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Priority</label>
+              <select
+                value={wishlistForm.priority}
+                onChange={(e) => setWishlistForm((f) => ({ ...f, priority: e.target.value as WishlistPriority }))}
+                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+              >
+                {Object.entries(WISHLIST_PRIORITY_LABEL).map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="min-h-11 w-full rounded-xl bg-blue text-sm font-semibold text-white transition-colors hover:bg-blue/90">
+            {editingWishlistItem ? "Save changes" : "Add to wishlist"}
           </button>
         </form>
       </Sheet>

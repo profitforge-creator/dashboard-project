@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { FinanceClient } from "./FinanceClient";
-import type { Transaction, BudgetPeriod, BudgetCategoryAllocation, FinancialGoal } from "@/lib/supabase/types";
+import type { Transaction, BudgetPeriod, BudgetCategoryAllocation, FinancialGoal, Order, WishlistItem } from "@/lib/supabase/types";
 
 function monthRange(now = new Date()) {
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -18,10 +18,12 @@ export default async function FinancePage() {
   const startISO = start.toISOString().slice(0, 10);
   const endISO = end.toISOString().slice(0, 10);
 
-  const [txRes, periodRes, goalsRes] = await Promise.all([
+  const [txRes, periodRes, goalsRes, ordersRes, wishlistRes] = await Promise.all([
     supabase.from("transactions").select("*").eq("user_id", user!.id).order("occurred_at", { ascending: false }).limit(500),
     supabase.from("budget_periods").select("*").eq("user_id", user!.id).eq("starts_on", startISO).eq("ends_on", endISO).maybeSingle(),
     supabase.from("financial_goals").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }),
+    supabase.from("orders").select("*").eq("user_id", user!.id).order("ordered_at", { ascending: false }),
+    supabase.from("wishlist_items").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }),
   ]);
 
   let period = periodRes.data as BudgetPeriod | null;
@@ -47,6 +49,8 @@ export default async function FinancePage() {
       period={period}
       categories={categories}
       financialGoals={(goalsRes.data ?? []) as FinancialGoal[]}
+      orders={(ordersRes.data ?? []) as Order[]}
+      wishlist={(wishlistRes.data ?? []) as WishlistItem[]}
     />
   );
 }

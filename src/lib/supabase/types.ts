@@ -352,6 +352,31 @@ export interface SocialMetricsLog {
   created_at: string;
 }
 
+export type OrderStatus = "ordered" | "shipped" | "delivered" | "returned" | "cancelled";
+export interface Order {
+  id: string;
+  user_id: string;
+  item: string;
+  merchant: string;
+  amount: number;
+  status: OrderStatus;
+  ordered_at: string;
+  tracking_note: string;
+  created_at: string;
+}
+
+export type WishlistPriority = "low" | "medium" | "high";
+export interface WishlistItem {
+  id: string;
+  user_id: string;
+  item: string;
+  url: string;
+  estimated_price: number | null;
+  priority: WishlistPriority;
+  purchased: boolean;
+  created_at: string;
+}
+
 export interface OnboardingResponse {
   id: string;
   user_id: string;

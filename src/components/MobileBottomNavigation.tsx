@@ -10,7 +10,7 @@ export function MobileBottomNavigation() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-bg-raised/90 backdrop-blur-lg pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto border-t border-border bg-bg-raised/90 backdrop-blur-lg pb-[env(safe-area-inset-bottom)] lg:hidden"
       aria-label="Primary (mobile)"
     >
       {NAV_ITEMS.map((item) => {
@@ -21,7 +21,7 @@ export function MobileBottomNavigation() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium",
+              "flex min-h-[56px] w-16 flex-shrink-0 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
               active ? "text-blue-light" : "text-text-secondary"
             )}
             aria-current={active ? "page" : undefined}
