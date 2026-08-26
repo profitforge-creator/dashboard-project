@@ -2,23 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { ChevronsLeft, ChevronsRight, LogOut } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { NAV_ITEMS } from "@/components/nav-items";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 
 export function DesktopSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const router = useRouter();
-
-  async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
 
   return (
     <aside
@@ -56,13 +47,6 @@ export function DesktopSidebar() {
       </nav>
 
       <div className="border-t border-border p-3">
-        <button
-          onClick={signOut}
-          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium text-text-secondary transition-colors hover:bg-card hover:text-text"
-        >
-          <LogOut className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={2} />
-          {!collapsed && "Sign out"}
-        </button>
         <button
           onClick={() => setCollapsed((v) => !v)}
           className="mt-1 flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium text-text-secondary transition-colors hover:bg-card hover:text-text"

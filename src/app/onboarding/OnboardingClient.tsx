@@ -102,6 +102,9 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
           {key === "name" && (
             <QuestionStep title="What should Amari call you?" subtitle="Used for a personal greeting on your Home screen.">
               <input
+                id="onboarding-name"
+                name="name"
+                type="text"
                 autoFocus
                 value={answers.full_name}
                 onChange={(e) => setAnswers((a) => ({ ...a, full_name: e.target.value }))}
@@ -129,6 +132,9 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
           {key === "wake_phrase" && (
             <QuestionStep title="What should wake Amari up?" subtitle="A phrase for voice activation, once AI voice is connected.">
               <input
+                id="onboarding-wake-phrase"
+                name="wake_phrase"
+                type="text"
                 autoFocus
                 value={answers.wake_phrase}
                 onChange={(e) => setAnswers((a) => ({ ...a, wake_phrase: e.target.value }))}

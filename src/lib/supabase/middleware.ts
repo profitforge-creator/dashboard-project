@@ -28,16 +28,27 @@ export async function updateSession(request: NextRequest) {
     });
 
     const {
-      data: { user },
+      data: { user: existingUser },
     } = await supabase.auth.getUser();
+    let user = existingUser;
 
     const path = request.nextUrl.pathname;
     const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p)) || path.startsWith("/_next") || path === "/favicon.ico";
 
+    // No account, no password, nothing to click: silently start an
+    // anonymous Supabase session on first visit so there's never a
+    // login screen. Requires "Anonymous Sign-Ins" enabled in the
+    // Supabase project's Auth settings.
     if (!user && !isPublic) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (!error) {
+        user = data.user;
+      } else {
+        console.error("Anonymous sign-in failed (enable it in Supabase Auth settings):", error.message);
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        return NextResponse.redirect(url);
+      }
     }
 
     return supabaseResponse;

@@ -9,7 +9,6 @@ import {
   Flame,
   Globe,
   Heart,
-  LogOut,
   Mic,
   Moon,
   Palette,
@@ -91,13 +90,6 @@ export function ProfileClient({ profile: initialProfile, integrations, completed
 
   async function connectIntegration(provider: keyof typeof INTEGRATION_META) {
     toast(`Not connected yet — ask me to wire up ${INTEGRATION_META[provider].envHint} and I'll finish this.`);
-  }
-
-  async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
   }
 
   async function exportData() {
@@ -287,13 +279,6 @@ export function ProfileClient({ profile: initialProfile, integrations, completed
           }
         />
       </SettingsSection>
-
-      <button
-        onClick={signOut}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border text-sm font-semibold text-text transition-colors hover:bg-card"
-      >
-        <LogOut className="h-4 w-4" strokeWidth={2} /> Sign out
-      </button>
 
       {saving && <p className="text-center text-xs text-text-secondary">Saving…</p>}
     </div>
