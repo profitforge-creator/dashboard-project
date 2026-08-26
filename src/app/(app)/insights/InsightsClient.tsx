@@ -5,8 +5,26 @@ import { TrendingUp, Timer, CheckCircle2, Flame, Briefcase, Wallet, Heart, Troph
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { InsightCard } from "@/components/InsightCard";
 import { SkeletonState } from "@/components/SkeletonState";
+import { BarChart } from "@/components/BarChart";
+import { AreaChart } from "@/components/AreaChart";
+import { Button } from "@/components/Button";
 import { createClient } from "@/lib/supabase/client";
 import type { Goal, FocusSession, Task, HabitLog, Habit } from "@/lib/supabase/types";
+
+/** Last N calendar days (oldest first), capped so bar/area charts stay readable regardless of period. */
+function lastNDays(n: number): string[] {
+  const days: string[] = [];
+  const today = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+function dayLabel(iso: string) {
+  return new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday: "narrow" });
+}
 
 type Period = "day" | "week" | "month" | "year";
 
@@ -114,6 +132,17 @@ export function InsightsClient() {
 
   const longestSession = sessions.reduce((max, s) => Math.max(max, s.actual_seconds), 0);
 
+  const chartDays = lastNDays(Math.min(PERIOD_DAYS[period], 14));
+  const focusByDay = chartDays.map((day) => ({
+    label: dayLabel(day),
+    value: Math.round(sessions.filter((s) => s.started_at.slice(0, 10) === day).reduce((sum, s) => sum + s.actual_seconds, 0) / 60),
+  }));
+  const completionByDay = chartDays.map((day) => {
+    const dayTasks = tasks.filter((t) => t.task_date === day);
+    const dayCompleted = dayTasks.filter((t) => t.completed).length;
+    return { label: dayLabel(day), value: dayTasks.length ? Math.round((dayCompleted / dayTasks.length) * 100) : 0 };
+  });
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
@@ -128,6 +157,19 @@ export function InsightsClient() {
             { value: "year", label: "Year" },
           ]}
         />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="mb-1 text-sm font-medium text-text">Focus time · last {chartDays.length}d</p>
+          <p className="mb-3 text-xs text-text-secondary">Minutes per day</p>
+          <BarChart data={focusByDay} unit="m" />
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="mb-1 text-sm font-medium text-text">Task completion · last {chartDays.length}d</p>
+          <p className="mb-3 text-xs text-text-secondary">Percent complete per day</p>
+          <AreaChart data={completionByDay} unit="%" />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
@@ -161,13 +203,9 @@ export function InsightsClient() {
           <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
             <Sparkles className="h-4 w-4 text-blue-light" strokeWidth={2} /> Amari&apos;s take
           </h2>
-          <button
-            onClick={getRecommendation}
-            disabled={recLoading}
-            className="rounded-full border border-blue/40 bg-blue/10 px-3 py-1.5 text-xs font-semibold text-blue-light disabled:opacity-50"
-          >
+          <Button variant="pill" onClick={getRecommendation} disabled={recLoading} className="min-h-9 px-3 py-1.5">
             {recLoading ? "Thinking…" : "Get recommendation"}
-          </button>
+          </Button>
         </div>
         {recommendation && <p className="mt-3 text-sm leading-relaxed text-text">{recommendation}</p>}
       </div>

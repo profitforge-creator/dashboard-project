@@ -15,6 +15,7 @@ import { HabitGrid } from "@/components/HabitGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ChatSheet } from "@/components/ChatSheet";
 import { QuickAdd } from "@/components/QuickAdd";
+import { NextTaskSquare } from "@/components/NextTaskSquare";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 
@@ -68,6 +69,19 @@ export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSes
   const priorities = tasks.filter((t) => t.is_priority);
   const otherTasks = tasks.filter((t) => !t.is_priority);
   const tasksCompleted = tasks.filter((t) => t.completed).length;
+
+  const nextTask = useMemo(() => {
+    const incomplete = tasks.filter((t) => !t.completed);
+    const nowStr = new Date().toTimeString().slice(0, 5);
+    const upcoming = incomplete
+      .filter((t) => !t.task_time || t.task_time >= nowStr)
+      .sort((a, b) => {
+        if (!a.task_time) return 1;
+        if (!b.task_time) return -1;
+        return a.task_time.localeCompare(b.task_time);
+      });
+    return upcoming[0] ?? incomplete[0] ?? null;
+  }, [tasks]);
 
   const nearestDeadlineGoal = useMemo(() => {
     const withDeadline = goals.filter((g) => g.deadline);
@@ -141,6 +155,8 @@ export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSes
           <MetricCard icon={CheckCircle2} label="Tasks done" value={tasksCompleted} suffix={`/${tasks.length}`} />
         </div>
       </div>
+
+      <NextTaskSquare task={nextTask} />
 
       <TimelineChart blocks={timelineBlocks} />
 
