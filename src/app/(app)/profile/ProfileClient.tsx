@@ -188,6 +188,9 @@ export function ProfileClient({ profile: initialProfile, integrations, completed
           label="Wake phrase"
           control={
             <input
+              id="profile-wake-phrase"
+              name="wake_phrase"
+              type="text"
               defaultValue={profile.wake_phrase}
               onBlur={(e) => e.target.value !== profile.wake_phrase && update({ wake_phrase: e.target.value })}
               className="w-32 rounded-lg border border-border bg-bg px-2.5 py-1.5 text-right text-sm text-text outline-none focus:border-blue"
@@ -224,6 +227,9 @@ export function ProfileClient({ profile: initialProfile, integrations, completed
           label="Timezone"
           control={
             <input
+              id="profile-timezone"
+              name="timezone"
+              type="text"
               defaultValue={profile.timezone}
               onBlur={(e) => e.target.value !== profile.timezone && update({ timezone: e.target.value })}
               className="w-40 rounded-lg border border-border bg-bg px-2.5 py-1.5 text-right text-sm text-text outline-none focus:border-blue"

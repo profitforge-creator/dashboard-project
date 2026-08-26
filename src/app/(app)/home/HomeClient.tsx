@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Play, Flame, Timer, CheckCircle2, ListChecks } from "lucide-react";
+import { MessageCircle, Play, Flame, Timer, CheckCircle2, ListChecks, Wallet } from "lucide-react";
 import type { Profile, Goal, Task, FocusSession, Habit, HabitLog } from "@/lib/supabase/types";
 import { AmariLifeCircle } from "@/components/AmariLifeCircle";
 import { MetricCard } from "@/components/MetricCard";
@@ -14,6 +14,7 @@ import { DeadlineCard } from "@/components/DeadlineCard";
 import { HabitGrid } from "@/components/HabitGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ChatSheet } from "@/components/ChatSheet";
+import { QuickAdd } from "@/components/QuickAdd";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 
@@ -28,6 +29,8 @@ interface HomeClientProps {
   recentHabitLogs: HabitLog[];
   lifeScore: number;
   today: string;
+  financeRunwayDays: number | null;
+  financeLiquidCash: number;
 }
 
 function last14Days(today: string): string[] {
@@ -57,7 +60,7 @@ function greeting() {
   return "Good night";
 }
 
-export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSession, habits, habitLogsToday, recentHabitLogs, lifeScore, today }: HomeClientProps) {
+export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSession, habits, habitLogsToday, recentHabitLogs, lifeScore, today, financeRunwayDays, financeLiquidCash }: HomeClientProps) {
   const router = useRouter();
   const toast = useToast();
   const [chatOpen, setChatOpen] = useState(false);
@@ -119,13 +122,16 @@ export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSes
           </p>
           <p className="text-sm text-text-secondary">{dateLabel}</p>
         </div>
-        <Link
-          href="/profile"
-          aria-label="Profile"
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-border bg-card text-sm font-semibold text-text"
-        >
-          {displayName.slice(0, 1).toUpperCase()}
-        </Link>
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <QuickAdd />
+          <Link
+            href="/profile"
+            aria-label="Profile"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-border bg-card text-sm font-semibold text-text"
+          >
+            {displayName.slice(0, 1).toUpperCase()}
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col items-center gap-4 py-2">
@@ -137,6 +143,25 @@ export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSes
       </div>
 
       <TimelineChart blocks={timelineBlocks} />
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-text">Shortcuts</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/finance" className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-border-strong">
+            <Wallet className="mb-2 h-4 w-4 text-blue-light" strokeWidth={2} />
+            <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Finance</p>
+            <p className="mt-0.5 text-lg font-semibold text-text">
+              {financeRunwayDays === null ? "—" : `${financeRunwayDays}d`} <span className="text-xs font-normal text-text-secondary">runway</span>
+            </p>
+            <p className="text-xs text-text-secondary">{financeLiquidCash.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })} liquid</p>
+          </Link>
+          <Link href="/goals" className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-border-strong">
+            <ListChecks className="mb-2 h-4 w-4 text-blue-light" strokeWidth={2} />
+            <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Goals</p>
+            <p className="mt-0.5 text-lg font-semibold text-text">{goals.length} <span className="text-xs font-normal text-text-secondary">active</span></p>
+          </Link>
+        </div>
+      </section>
 
       {activeSession && (
         <FocusSessionCard

@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/utils";
+import { computeBurnRates } from "@/lib/finance";
 import { HomeClient } from "./HomeClient";
-import type { Goal, Task, FocusSession, Habit, HabitLog } from "@/lib/supabase/types";
+import type { Goal, Task, FocusSession, Habit, HabitLog, Transaction } from "@/lib/supabase/types";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -10,15 +11,18 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   const today = todayISO();
 
-  const [profileRes, goalsRes, tasksRes, sessionsRes, activeSessionRes, habitsRes, habitLogsRes] = await Promise.all([
+  const [profileRes, goalsRes, tasksRes, sessionsRes, activeSessionRes, habitsRes, habitLogsRes, transactionsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user!.id).single(),
     supabase.from("goals").select("*").eq("user_id", user!.id).eq("status", "active").order("deadline", { ascending: true, nullsFirst: false }),
-    supabase.from("tasks").select("*").eq("user_id", user!.id).eq("task_date", today).order("task_time", { ascending: true, nullsFirst: false }),
+    supabase.from("tasks").select("*").eq("user_id", user!.id).eq("task_date", today).order("sort_order", { ascending: true }).order("task_time", { ascending: true, nullsFirst: false }),
     supabase.from("focus_sessions").select("*").eq("user_id", user!.id).gte("started_at", `${today}T00:00:00`).order("started_at", { ascending: true }),
     supabase.from("focus_sessions").select("*").eq("user_id", user!.id).in("status", ["running", "paused"]).order("started_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("habits").select("*").eq("user_id", user!.id).order("created_at", { ascending: true }),
     supabase.from("habit_logs").select("*").eq("user_id", user!.id).eq("log_date", today),
+    supabase.from("transactions").select("*").eq("user_id", user!.id).order("occurred_at", { ascending: false }).limit(500),
   ]);
+
+  const financeRates = computeBurnRates((transactionsRes.data ?? []) as Transaction[], 30);
 
   const goals = (goalsRes.data ?? []) as Goal[];
   const tasks = (tasksRes.data ?? []) as Task[];
@@ -85,6 +89,8 @@ export default async function HomePage() {
       recentHabitLogs={recentHabitLogs}
       lifeScore={lifeScore}
       today={today}
+      financeRunwayDays={financeRates.actualRunwayDays ?? financeRates.baselineRunwayDays}
+      financeLiquidCash={financeRates.liquidCash}
     />
   );
 }

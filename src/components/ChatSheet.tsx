@@ -71,6 +71,9 @@ export function ChatSheet({ open, onClose, initialMessage }: { open: boolean; on
         </div>
         <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
           <input
+            id="chat-message"
+            name="message"
+            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}

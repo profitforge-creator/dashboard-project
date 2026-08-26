@@ -184,6 +184,9 @@ export function GoalsClient({ goals, progressByGoal, todayGoalIds }: GoalsClient
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Title</label>
             <input
+              id="goal-title"
+              name="title"
+              type="text"
               required
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -202,6 +205,9 @@ export function GoalsClient({ goals, progressByGoal, todayGoalIds }: GoalsClient
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-text-secondary">Next action</label>
             <input
+              id="goal-next-action"
+              name="next_action"
+              type="text"
               value={form.next_action}
               onChange={(e) => setForm((f) => ({ ...f, next_action: e.target.value }))}
               className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
