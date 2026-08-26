@@ -30,57 +30,53 @@ const escapeHtml = (s) => (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', 
 function toast(msg) {
   const el = $('#toast');
   el.textContent = msg;
-  el.classList.remove('app-hidden');
+  el.classList.add('show');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.add('app-hidden'), 2400);
+  toast._t = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
 function setSync(status) {
   const dot = $('#sync-dot');
   const text = $('#sync-text');
-  dot.className = 'h-1.5 w-1.5 rounded-full ' + (status === 'ok' ? 'bg-emerald-500' : status === 'error' ? 'bg-red-500' : 'bg-slate-300 dark:bg-slate-600');
+  dot.className = 'sync-dot' + (status === 'ok' ? ' ok' : status === 'error' ? ' error' : '');
   text.textContent = status === 'ok' ? 'Synced' : status === 'error' ? 'Offline — retrying' : 'Connecting…';
 }
 
 // ---------- Theme ----------
 function applyTheme(dark) {
-  document.documentElement.classList.toggle('dark', dark);
+  if (dark) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', 'light');
   localStorage.setItem('compass-theme', dark ? 'dark' : 'light');
-  $('#theme-label').textContent = dark ? 'Light mode' : 'Dark mode';
+  const label = dark ? 'Light mode' : 'Dark mode';
+  $('#theme-label').textContent = label;
 }
+function isDarkActive() { return document.documentElement.getAttribute('data-theme') !== 'light'; }
 (function initTheme() {
   const saved = localStorage.getItem('compass-theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   applyTheme(saved ? saved === 'dark' : prefersDark);
 })();
-$('#theme-toggle').addEventListener('click', () => applyTheme(!document.documentElement.classList.contains('dark')));
-$('#theme-toggle-mobile').addEventListener('click', () => applyTheme(!document.documentElement.classList.contains('dark')));
+$('#theme-toggle').addEventListener('click', () => applyTheme(!isDarkActive()));
+$('#theme-toggle-mobile').addEventListener('click', () => applyTheme(!isDarkActive()));
 
 // ---------- Navigation ----------
 const sectionTitles = { long: 'Long-term Goals', short: 'Short-term Goals', schedule: 'Daily Schedule', ideas: 'Idea Dump' };
 function goToSection(sec) {
   state.section = sec;
-  $$('.goal-section, #section-schedule, #section-ideas').forEach((el) => el.classList.add('app-hidden'));
-  $(`#section-${sec}`).classList.remove('app-hidden');
+  $$('.view').forEach((el) => el.classList.remove('active'));
+  $(`#section-${sec}`).classList.add('active');
   $$('.nav-btn').forEach((b) => {
     const active = b.dataset.section === sec;
-    b.classList.toggle('bg-primary/10', active);
-    b.classList.toggle('text-primary', active);
-    b.classList.toggle('dark:bg-primary/20', active);
-    b.classList.toggle('dark:text-primary-light', active);
-    b.classList.toggle('text-slate-600', !active);
-    b.classList.toggle('dark:text-slate-300', !active);
+    b.classList.toggle('active', active);
     if (active) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   $$('.nav-btn-m').forEach((b) => {
     const active = b.dataset.section === sec;
-    b.classList.toggle('text-primary', active);
-    b.classList.toggle('dark:text-primary-light', active);
-    b.classList.toggle('text-slate-400', !active);
+    b.classList.toggle('active', active);
     if (active) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   $('#mobile-title').textContent = sectionTitles[sec];
-  $('#fab-idea').classList.toggle('app-hidden', sec === 'ideas');
+  $('#fab-idea').classList.toggle('show', sec !== 'ideas');
   localStorage.setItem('compass-section', sec);
   if (sec === 'schedule') renderSchedule();
   if (sec === 'ideas') renderIdeas();
@@ -89,12 +85,11 @@ $$('.nav-btn, .nav-btn-m').forEach((b) => b.addEventListener('click', () => goTo
 $('#fab-idea').addEventListener('click', () => { goToSection('ideas'); setTimeout(() => $('#idea-input').focus(), 50); });
 
 // ---------- Modal helpers ----------
-function openModal(id) { $(id).classList.remove('app-hidden'); }
-function closeModal(id) { $(id).classList.add('app-hidden'); }
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
 $$('[data-close-modal]').forEach((b) => b.addEventListener('click', (e) => closeModal('#' + e.target.closest('[id$="-modal"]').id)));
-$$('.modal-overlay').forEach((o) => o.addEventListener('click', () => o.closest('[id$="-modal"]').classList.add('app-hidden')));
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') $$('[id$="-modal"]:not(.app-hidden)').forEach((m) => m.classList.add('app-hidden'));
+  if (e.key === 'Escape') $$('[id$="-modal"].open').forEach((m) => m.classList.remove('open'));
 });
 
 let confirmCallback = null;
@@ -172,45 +167,37 @@ function timelineInfo(createdAt, deadline) {
   return { pct, level, label };
 }
 
-const levelStyles = {
-  normal: { bar: 'bg-gradient-to-r from-emerald-400 to-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', chip: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-  soon: { bar: 'bg-gradient-to-r from-amber-400 to-accent', text: 'text-amber-600 dark:text-accent', chip: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-accent' },
-  urgent: { bar: 'bg-gradient-to-r from-orange-500 to-red-500', text: 'text-red-600 dark:text-red-400', chip: 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400' },
-  overdue: { bar: 'bg-gradient-to-r from-red-600 to-red-700', text: 'text-red-700 dark:text-red-400', chip: 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400' },
-};
-
 function goalCardHtml(goal) {
   const tl = timelineInfo(goal.created_at, goal.deadline);
   const isScheduled = state.tasks.some((t) => t.goal_id === goal.id);
-  const styles = tl ? levelStyles[tl.level] : null;
-  const urgentClass = tl && (tl.level === 'urgent' || tl.level === 'overdue') ? 'urgent-pulse' : '';
+  const urgentClass = tl && (tl.level === 'urgent' || tl.level === 'overdue') ? 'pulse-urgent' : '';
   return `
-  <div class="goal-card card-hover fade-in bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 ${goal.completed ? 'opacity-60' : ''}" data-id="${goal.id}">
-    <div class="flex items-start gap-3">
-      <button data-toggle-complete="${goal.id}" class="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${goal.completed ? 'bg-primary border-primary' : 'border-slate-300 dark:border-slate-600 hover:border-primary'}" aria-label="Toggle complete">
-        ${goal.completed ? '<svg class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+  <div class="dk-card goal-card fade-in ${goal.completed ? 'completed' : ''}" data-id="${goal.id}">
+    <div class="goal-card__row">
+      <button data-toggle-complete="${goal.id}" class="goal-check ${goal.completed ? 'done' : ''}" aria-label="Toggle complete">
+        ${goal.completed ? '<svg class="icon"><use href="#i-check"/></svg>' : ''}
       </button>
-      <div class="min-w-0 flex-1">
-        <div class="flex items-start justify-between gap-2">
-          <h3 class="text-sm font-semibold leading-snug ${goal.completed ? 'line-through text-slate-400' : ''}">${escapeHtml(goal.title)}</h3>
-          <div class="flex items-center gap-1 shrink-0">
-            <button data-edit-goal="${goal.id}" class="p-1.5 rounded-md text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors" aria-label="Edit"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-            <button data-delete-goal="${goal.id}" class="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors" aria-label="Delete"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg></button>
+      <div style="min-width:0; flex:1;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+          <h3 class="goal-card__title ${goal.completed ? 'done' : ''}">${escapeHtml(goal.title)}</h3>
+          <div class="goal-card__actions">
+            <button data-edit-goal="${goal.id}" class="icon-btn" aria-label="Edit"><svg class="icon"><use href="#i-edit"/></svg></button>
+            <button data-delete-goal="${goal.id}" class="icon-btn icon-btn--danger" aria-label="Delete"><svg class="icon"><use href="#i-trash"/></svg></button>
           </div>
         </div>
-        ${goal.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">${escapeHtml(goal.description)}</p>` : ''}
+        ${goal.description ? `<p class="goal-card__desc">${escapeHtml(goal.description)}</p>` : ''}
         ${tl ? `
-        <div class="mt-3">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="text-[11px] font-semibold ${styles.text} ${urgentClass}">${tl.label}</span>
-            <span class="text-[11px] text-slate-400">${new Date(goal.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+        <div class="goal-card__timeline">
+          <div class="timeline-toprow">
+            <span class="timeline-label level-${tl.level} ${urgentClass}">${tl.label}</span>
+            <span class="timeline-date">${new Date(goal.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           </div>
-          <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-            <div class="h-full rounded-full ${styles.bar} transition-all duration-500" style="width:${tl.pct}%"></div>
+          <div class="timeline-track">
+            <div class="timeline-fill level-${tl.level}" style="width:${tl.pct}%"></div>
           </div>
-        </div>` : `<p class="text-[11px] text-slate-400 mt-2">No deadline set</p>`}
-        <div class="flex items-center gap-2 mt-3 flex-wrap">
-          ${isScheduled ? `<span class="text-[11px] font-medium text-primary dark:text-primary-light bg-primary/10 px-2 py-1 rounded-md flex items-center gap-1"><svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>On schedule</span>` : `<button data-move-goal="${goal.id}" class="text-[11px] font-semibold text-primary dark:text-primary-light hover:underline">+ Add to daily schedule</button>`}
+        </div>` : `<p class="no-deadline">No deadline set</p>`}
+        <div class="goal-card__foot">
+          ${isScheduled ? `<span class="on-schedule"><svg class="icon"><use href="#i-check"/></svg>On schedule</span>` : `<button data-move-goal="${goal.id}" class="add-schedule-btn">+ Add to daily schedule</button>`}
         </div>
       </div>
     </div>
@@ -231,10 +218,10 @@ function renderGoals(term) {
     });
   if (!goals.length) {
     list.innerHTML = '';
-    empty.classList.remove('app-hidden');
+    empty.classList.add('show');
     return;
   }
-  empty.classList.add('app-hidden');
+  empty.classList.remove('show');
   list.innerHTML = goals.map(goalCardHtml).join('');
 }
 
@@ -387,18 +374,18 @@ function formatTime(t) {
 function taskRowHtml(task) {
   const goal = task.goal_id ? state.goals.find((g) => g.id === task.goal_id) : null;
   return `
-  <div class="task-row card-hover fade-in flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3" data-id="${task.id}">
-    <button data-toggle-task="${task.id}" class="h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${task.completed ? 'bg-primary border-primary' : 'border-slate-300 dark:border-slate-600 hover:border-primary'}" aria-label="Toggle complete">
-      ${task.completed ? '<svg class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+  <div class="dk-card task-row fade-in ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+    <button data-toggle-task="${task.id}" class="goal-check ${task.completed ? 'done' : ''}" aria-label="Toggle complete">
+      ${task.completed ? '<svg class="icon"><use href="#i-check"/></svg>' : ''}
     </button>
-    <div class="min-w-0 flex-1">
-      <p class="text-sm font-medium leading-snug ${task.completed ? 'line-through text-slate-400' : ''}">${escapeHtml(task.title)}</p>
-      ${goal ? `<p class="text-[11px] text-primary dark:text-primary-light mt-0.5 flex items-center gap-1"><svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg>${escapeHtml(goal.title)}</p>` : ''}
+    <div class="task-row__body">
+      <p class="task-row__title">${escapeHtml(task.title)}</p>
+      ${goal ? `<p class="task-row__goal"><svg class="icon"><use href="#i-target"/></svg>${escapeHtml(goal.title)}</p>` : ''}
     </div>
-    ${task.task_time ? `<span class="text-xs font-mono text-slate-400 shrink-0">${formatTime(task.task_time)}</span>` : `<span class="text-xs text-slate-300 dark:text-slate-600 shrink-0">Anytime</span>`}
-    <div class="flex items-center gap-1 shrink-0">
-      <button data-edit-task="${task.id}" class="p-1.5 rounded-md text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors" aria-label="Edit"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-      <button data-delete-task="${task.id}" class="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors" aria-label="Delete"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg></button>
+    ${task.task_time ? `<span class="task-row__time">${formatTime(task.task_time)}</span>` : `<span class="task-row__time" style="opacity:.55">Anytime</span>`}
+    <div class="task-row__actions">
+      <button data-edit-task="${task.id}" class="icon-btn" aria-label="Edit"><svg class="icon"><use href="#i-edit"/></svg></button>
+      <button data-delete-task="${task.id}" class="icon-btn icon-btn--danger" aria-label="Delete"><svg class="icon"><use href="#i-trash"/></svg></button>
     </div>
   </div>`;
 }
@@ -416,11 +403,11 @@ function renderSchedule() {
     });
   if (!tasks.length) {
     list.innerHTML = '';
-    empty.classList.remove('app-hidden');
+    empty.classList.add('show');
     $('#schedule-progress').textContent = '';
     return;
   }
-  empty.classList.add('app-hidden');
+  empty.classList.remove('show');
   list.innerHTML = tasks.map(taskRowHtml).join('');
   const done = tasks.filter((t) => t.completed).length;
   $('#schedule-progress').textContent = `${done}/${tasks.length} done`;
@@ -631,19 +618,19 @@ function timeAgo(iso) {
 
 function ideaCardHtml(idea) {
   return `
-  <div class="idea-card card-hover fade-in bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 ${idea.archived ? 'opacity-50' : ''}" data-id="${idea.id}">
-    <div class="flex items-start justify-between gap-2">
-      <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">${escapeHtml(idea.content)}</p>
-      <div class="flex items-center gap-1 shrink-0">
-        <button data-promote-idea="${idea.id}" class="p-1.5 rounded-md text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors" aria-label="Promote to goal" title="Turn into a goal"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg></button>
-        <button data-archive-idea="${idea.id}" class="p-1.5 rounded-md text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors" aria-label="Archive" title="${idea.archived ? 'Unarchive' : 'Archive'}"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8M10 13h4"/></svg></button>
-        <button data-delete-idea="${idea.id}" class="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors" aria-label="Delete"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg></button>
+  <div class="dk-card idea-card fade-in ${idea.archived ? 'archived' : ''}" data-id="${idea.id}">
+    <div class="idea-card__row">
+      <p class="idea-card__text">${escapeHtml(idea.content)}</p>
+      <div class="idea-card__actions">
+        <button data-promote-idea="${idea.id}" class="icon-btn" aria-label="Promote to goal" title="Turn into a goal"><svg class="icon"><use href="#i-target"/></svg></button>
+        <button data-archive-idea="${idea.id}" class="icon-btn" aria-label="Archive" title="${idea.archived ? 'Unarchive' : 'Archive'}"><svg class="icon"><use href="#i-archive"/></svg></button>
+        <button data-delete-idea="${idea.id}" class="icon-btn icon-btn--danger" aria-label="Delete"><svg class="icon"><use href="#i-trash"/></svg></button>
       </div>
     </div>
-    <div class="flex items-center gap-2 mt-2 flex-wrap">
-      <span class="text-[11px] text-slate-400">${timeAgo(idea.created_at)}</span>
-      ${(idea.tags || []).map((t) => `<span class="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">#${escapeHtml(t)}</span>`).join('')}
-      ${idea.promoted_goal_id ? `<span class="text-[10px] font-semibold text-primary dark:text-primary-light">→ promoted to a goal</span>` : ''}
+    <div class="idea-card__meta">
+      <span class="idea-card__time">${timeAgo(idea.created_at)}</span>
+      ${(idea.tags || []).map((t) => `<span class="idea-tag">#${escapeHtml(t)}</span>`).join('')}
+      ${idea.promoted_goal_id ? `<span class="idea-promoted">&rarr; promoted to a goal</span>` : ''}
     </div>
   </div>`;
 }
@@ -651,7 +638,7 @@ function ideaCardHtml(idea) {
 function updateIdeaBadge() {
   const active = state.ideas.filter((i) => !i.archived).length;
   const badge = $('#idea-count-badge');
-  if (active > 0) { badge.textContent = active; badge.classList.remove('app-hidden'); } else badge.classList.add('app-hidden');
+  if (active > 0) { badge.textContent = active; badge.classList.add('show'); } else badge.classList.remove('show');
 }
 
 function renderTagFilters() {
@@ -659,7 +646,7 @@ function renderTagFilters() {
   state.ideas.forEach((i) => (i.tags || []).forEach((t) => (tagCounts[t] = (tagCounts[t] || 0) + 1)));
   const tags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]).slice(0, 8);
   $('#tag-filters').innerHTML = tags.map((t) => `
-    <button data-tag-filter="${escapeHtml(t)}" class="text-[11px] font-medium px-2 py-1 rounded-full border transition-colors ${state.activeTagFilter === t ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-primary/40'}">#${escapeHtml(t)}</button>
+    <button data-tag-filter="${escapeHtml(t)}" class="tag-chip ${state.activeTagFilter === t ? 'active' : ''}">#${escapeHtml(t)}</button>
   `).join('');
 }
 
@@ -676,10 +663,10 @@ function renderIdeas() {
   }
   if (!ideas.length) {
     list.innerHTML = '';
-    empty.classList.remove('app-hidden');
+    empty.classList.add('show');
     return;
   }
-  empty.classList.add('app-hidden');
+  empty.classList.remove('show');
   list.innerHTML = ideas.map(ideaCardHtml).join('');
   updateIdeaBadge();
 }
@@ -699,14 +686,14 @@ function showRandomReminder(pool) {
   if (!idea) return;
   $('#reminder-text').textContent = idea.content;
   $('#reminder-meta').textContent = `Captured ${timeAgo(idea.created_at)}`;
-  $('#reminder-banner').classList.remove('app-hidden');
+  $('#reminder-banner').classList.add('show');
   $('#reminder-banner').dataset.ideaId = idea.id;
   supabase.from('ideas').update({ last_surfaced_at: new Date().toISOString() }).eq('id', idea.id).then(() => {
     idea.last_surfaced_at = new Date().toISOString();
   });
 }
 $('#reminder-dismiss').addEventListener('click', () => {
-  $('#reminder-banner').classList.add('app-hidden');
+  $('#reminder-banner').classList.remove('show');
   sessionStorage.setItem('compass-reminder-dismissed', String(Date.now() + 1000 * 60 * 60 * 4));
 });
 $('#reminder-snooze').addEventListener('click', () => {
@@ -716,7 +703,7 @@ $('#reminder-snooze').addEventListener('click', () => {
 $('#reminder-promote').addEventListener('click', () => {
   const id = $('#reminder-banner').dataset.ideaId;
   const idea = state.ideas.find((i) => i.id === id);
-  $('#reminder-banner').classList.add('app-hidden');
+  $('#reminder-banner').classList.remove('show');
   if (idea) { goToSection('ideas'); promoteIdeaToGoal(idea); }
 });
 
@@ -741,8 +728,8 @@ function heuristicAsk(query) {
 
 async function askAssistant(query) {
   const reply = $('#assistant-reply');
-  reply.classList.remove('app-hidden');
-  reply.innerHTML = '<span class="text-slate-400">Thinking…</span>';
+  reply.classList.add('show');
+  reply.innerHTML = '<span style="color:var(--muted)">Thinking…</span>';
   try {
     const res = await fetch('/api/ask', {
       method: 'POST',
@@ -759,8 +746,8 @@ async function askAssistant(query) {
 }
 function renderAssistantReply(text, matches) {
   const reply = $('#assistant-reply');
-  reply.innerHTML = `<p class="text-slate-700 dark:text-slate-200">${escapeHtml(text)}</p>` +
-    (matches.length ? `<div class="mt-2 space-y-1.5">${matches.map((m) => `<div class="text-xs bg-slate-50 dark:bg-slate-800 rounded-lg px-2.5 py-2"><span class="text-slate-600 dark:text-slate-300">${escapeHtml(m.content.slice(0, 140))}${m.content.length > 140 ? '…' : ''}</span><span class="block text-[10px] text-slate-400 mt-0.5">${timeAgo(m.created_at)}</span></div>`).join('')}</div>` : '');
+  reply.innerHTML = `<p style="margin:0">${escapeHtml(text)}</p>` +
+    (matches.length ? `<div class="assistant-reply__matches">${matches.map((m) => `<div class="assistant-match">${escapeHtml(m.content.slice(0, 140))}${m.content.length > 140 ? '…' : ''}<span class="assistant-match__meta">${timeAgo(m.created_at)}</span></div>`).join('')}</div>` : '');
 }
 $('#assistant-form').addEventListener('submit', (e) => {
   e.preventDefault();

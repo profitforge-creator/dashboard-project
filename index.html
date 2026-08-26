@@ -4,228 +4,451 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Compass · Goals, Schedule & Ideas</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234338CA%22/><path d=%22M12 6l1.8 4.2L18 12l-4.2 1.8L12 18l-1.8-4.2L6 12l4.2-1.8Z%22 fill=%22%23FBBF24%22/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%23000%22/><circle cx=%2212%22 cy=%2212%22 r=%225%22 fill=%22%236EE7B7%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
-          mono: ['Fira Code', 'ui-monospace', 'monospace'],
-        },
-        colors: {
-          primary: { DEFAULT: '#4338CA', light: '#6366F1' },
-          accent: '#FBBF24',
-          canvas: '#F7F7FB',
-        },
-      },
-    },
-  };
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  html { color-scheme: light; }
-  html.dark { color-scheme: dark; }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
-  .dark ::-webkit-scrollbar-thumb { background: #334155; }
-  @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
-  }
-  [x-cloak], .app-hidden { display: none !important; }
-  .fade-in { animation: fadeIn .18s ease-out; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes pulseUrgent { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
-  .urgent-pulse { animation: pulseUrgent 1.6s ease-in-out infinite; }
-  .timeline-track { background: repeating-linear-gradient(90deg, transparent, transparent 5px); }
-  input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; }
-  .card-hover { transition: box-shadow .15s ease, transform .15s ease; }
-  .card-hover:hover { box-shadow: 0 4px 20px -4px rgb(0 0 0 / 0.12); }
-  .dark .card-hover:hover { box-shadow: 0 4px 20px -4px rgb(0 0 0 / 0.4); }
+/* ============================================================
+ * Compass  -  styled from this project's design system
+ * (design-kit.tsx / lab.html): black canvas, mint accent,
+ * italic serif headings, Inter UI text, JetBrains Mono tags.
+ * ============================================================ */
+:root{
+  color-scheme: dark;
+  --bg:#000000; --bg-elevated:#0a0a0a; --fg:#ffffff;
+  --accent:#6EE7B7; --accent-hover:#5dd6a6; --accent-glow:rgba(110,231,183,.4);
+  --amber:#F59E0B; --red:#EF4444; --urgent:color-mix(in srgb, var(--red) 55%, var(--amber) 45%);
+  --muted:rgba(255,255,255,.5); --muted-strong:rgba(255,255,255,.7);
+  --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.16);
+  --card:rgba(255,255,255,.02); --card-elevated:rgba(255,255,255,.04);
+
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;
+  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-pill:999px;
+  --text-xs:12px;--text-sm:14px;--text-base:16px;--text-lg:18px;--text-xl:22px;--text-2xl:28px;
+
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-serif:'Instrument Serif','Times New Roman',Georgia,serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+
+  --ease:cubic-bezier(.2,.8,.2,1); --ease-premium:cubic-bezier(.16,1,.3,1);
+  --duration-fast:120ms; --duration:180ms; --duration-lift:420ms;
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#fafaf9; --bg-elevated:#ffffff; --fg:#0a0a0a;
+  --muted:rgba(0,0,0,.5); --muted-strong:rgba(0,0,0,.72);
+  --border:rgba(0,0,0,.09); --border-strong:rgba(0,0,0,.18);
+  --card:rgba(0,0,0,.025); --card-elevated:rgba(0,0,0,.045);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-sans);
+  -webkit-font-smoothing:antialiased; min-height:100vh;
+  transition:background var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+button,input,textarea,select{ font-family:inherit; color:inherit; }
+::selection{ background:var(--accent); color:#000; }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:999px; }
+@media(prefers-reduced-motion:reduce){ *{ animation-duration:.001ms!important; transition-duration:.001ms!important; } }
+
+.icon{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
+
+/* ---------- shell ---------- */
+.app-shell{ min-height:100vh; display:flex; flex-direction:column; }
+@media(min-width:1024px){ .app-shell{ flex-direction:row; } }
+
+.sidebar{ display:none; flex-direction:column; width:240px; flex-shrink:0; border-right:1px solid var(--border); background:var(--bg-elevated); height:100vh; position:sticky; top:0; }
+@media(min-width:1024px){ .sidebar{ display:flex; } }
+.sidebar__brand{ height:64px; display:flex; align-items:center; gap:10px; padding:0 20px; border-bottom:1px solid var(--border); }
+.sidebar__mark{ height:28px; width:28px; border-radius:8px; background:#000; border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sidebar__mark span{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent-glow); }
+.sidebar__name{ font-family:var(--font-serif); font-style:italic; font-size:17px; letter-spacing:-.01em; }
+
+.sidebar nav{ flex:1; overflow-y:auto; padding:16px 12px; display:flex; flex-direction:column; gap:4px; }
+.nav-btn{ width:100%; display:flex; align-items:center; gap:12px; padding:9px 12px; border-radius:var(--radius-md); font-size:var(--text-sm); font-weight:500; background:transparent; border:1px solid transparent; color:var(--muted-strong); cursor:pointer; transition:background var(--duration) var(--ease), color var(--duration) var(--ease), border-color var(--duration) var(--ease); }
+.nav-btn:hover{ background:var(--card); color:var(--fg); }
+.nav-btn.active{ background:var(--card-elevated); border-color:var(--border); color:var(--accent); }
+.nav-btn .icon{ flex-shrink:0; }
+.nav-badge{ margin-left:auto; font-family:var(--font-mono); font-size:10px; font-weight:600; background:rgba(245,158,11,.15); color:var(--amber); padding:2px 7px; border-radius:var(--radius-pill); display:none; }
+.nav-badge.show{ display:inline-flex; }
+
+.sidebar__foot{ padding:12px; border-top:1px solid var(--border); }
+.theme-toggle{ width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:var(--radius-md); background:transparent; border:1px solid transparent; color:var(--muted-strong); font-size:var(--text-sm); font-weight:500; cursor:pointer; transition:background var(--duration) var(--ease); }
+.theme-toggle:hover{ background:var(--card); color:var(--fg); }
+.sync-row{ display:flex; align-items:center; gap:8px; padding:8px 12px; font-family:var(--font-mono); font-size:11px; color:var(--muted); }
+.sync-dot{ width:6px; height:6px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+.sync-dot.ok{ background:var(--accent); box-shadow:0 0 6px var(--accent-glow); }
+.sync-dot.error{ background:var(--red); }
+
+/* ---------- mobile chrome ---------- */
+.mobile-header{ display:flex; position:sticky; top:0; z-index:30; height:56px; align-items:center; justify-content:space-between; padding:0 16px; background:color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid var(--border); }
+@media(min-width:1024px){ .mobile-header{ display:none; } }
+.mobile-header__brand{ display:flex; align-items:center; gap:8px; }
+.mobile-header__mark{ height:24px; width:24px; border-radius:7px; background:#000; border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; }
+.mobile-header__mark span{ width:7px; height:7px; border-radius:50%; background:var(--accent); }
+.mobile-header__title{ font-family:var(--font-serif); font-style:italic; font-size:15px; }
+.icon-btn{ width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius-md); background:transparent; border:1px solid transparent; color:var(--muted); cursor:pointer; transition:background var(--duration) var(--ease), color var(--duration) var(--ease), border-color var(--duration) var(--ease); }
+.icon-btn:hover{ background:var(--card-elevated); border-color:var(--border); color:var(--fg); }
+.icon-btn .icon{ width:14px; height:14px; }
+.icon-btn--danger:hover{ color:var(--red); background:rgba(239,68,68,.1); }
+
+.mobile-nav{ display:flex; position:fixed; bottom:0; left:0; right:0; z-index:30; background:var(--bg-elevated); border-top:1px solid var(--border); }
+@media(min-width:1024px){ .mobile-nav{ display:none; } }
+.nav-btn-m{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:10px 0; font-size:10px; font-weight:500; background:transparent; border:none; color:var(--muted); cursor:pointer; }
+.nav-btn-m.active{ color:var(--accent); }
+.nav-btn-m .icon{ width:18px; height:18px; }
+
+.fab{ display:none; position:fixed; bottom:80px; right:16px; z-index:30; height:48px; width:48px; border-radius:50%; background:var(--accent); color:#000; border:none; align-items:center; justify-content:center; box-shadow:0 8px 24px -6px var(--accent-glow); cursor:pointer; }
+@media(min-width:1024px){ .fab{ display:none!important; } }
+.fab.show{ display:flex; }
+.fab .icon{ width:20px; height:20px; }
+
+/* ---------- main ---------- */
+.main{ flex:1; min-width:0; padding-bottom:88px; }
+@media(min-width:1024px){ .main{ padding-bottom:32px; } }
+.container{ max-width:920px; margin:0 auto; padding:24px 16px; }
+@media(min-width:640px){ .container{ padding:24px; } }
+
+.reminder{ display:none; margin-bottom:20px; border-radius:var(--radius-lg); border:1px solid rgba(245,158,11,.3); background:rgba(245,158,11,.06); padding:16px; animation:fadeIn .2s var(--ease); }
+.reminder.show{ display:block; }
+.reminder__row{ display:flex; align-items:flex-start; gap:12px; }
+.reminder__icon{ height:32px; width:32px; border-radius:var(--radius-md); background:rgba(245,158,11,.15); display:flex; align-items:center; justify-content:center; color:var(--amber); flex-shrink:0; }
+.reminder__eyebrow{ font-family:var(--font-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--amber); margin-bottom:4px; }
+.reminder__text{ font-size:var(--text-sm); color:var(--fg); line-height:1.5; word-break:break-word; }
+.reminder__meta{ font-size:11px; color:var(--muted); margin-top:4px; }
+.reminder__actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+
+@keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+.fade-in{ animation:fadeIn .18s var(--ease-premium); }
+
+.view{ display:none; }
+.view.active{ display:block; }
+.view__head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:4px; flex-wrap:wrap; }
+.view__title{ font-family:var(--font-serif); font-style:italic; font-size:26px; letter-spacing:-.01em; }
+.view__sub{ font-size:var(--text-sm); color:var(--muted-strong); margin:6px 0 20px; }
+
+/* ---------- buttons ---------- */
+.dk-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 16px; border:1px solid transparent; border-radius:var(--radius-md); font-size:var(--text-sm); font-weight:600; line-height:1; white-space:nowrap; cursor:pointer; transition:background var(--duration) var(--ease), border-color var(--duration) var(--ease), color var(--duration) var(--ease), transform var(--duration-fast) var(--ease); }
+.dk-btn:disabled{ opacity:.5; cursor:not-allowed; }
+.dk-btn--primary{ background:var(--accent); color:#000; }
+.dk-btn--primary:hover:not(:disabled){ background:var(--accent-hover); }
+.dk-btn--primary:active:not(:disabled){ transform:translateY(1px); }
+.dk-btn--ghost{ background:transparent; color:var(--fg); border-color:var(--border); }
+.dk-btn--ghost:hover:not(:disabled){ border-color:var(--border-strong); background:var(--card); }
+.dk-btn--link{ background:transparent; color:var(--accent); padding:4px 0; font-weight:600; }
+.dk-btn--link:hover{ text-decoration:underline; }
+.dk-btn--block{ width:100%; }
+
+/* ---------- fields ---------- */
+.dk-field{ display:flex; flex-direction:column; gap:6px; }
+.dk-field__label{ font-size:var(--text-xs); font-weight:600; color:var(--muted-strong); letter-spacing:.02em; text-transform:uppercase; }
+.dk-field__hint{ font-weight:400; text-transform:none; color:var(--muted); }
+.dk-input,.dk-textarea,.dk-select{ background:var(--card); border:1px solid var(--border); color:var(--fg); font-size:var(--text-sm); padding:10px 12px; border-radius:var(--radius-sm); outline:none; width:100%; transition:border-color var(--duration) var(--ease), background var(--duration) var(--ease); }
+.dk-textarea{ resize:none; line-height:1.5; }
+.dk-input::placeholder,.dk-textarea::placeholder{ color:var(--muted); }
+.dk-input:hover,.dk-textarea:hover{ border-color:var(--border-strong); }
+.dk-input:focus,.dk-textarea:focus{ border-color:var(--accent); background:color-mix(in srgb, var(--accent) 5%, var(--card)); }
+
+/* ---------- generic card ---------- */
+.dk-card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); transition:border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease), transform var(--duration-fast) var(--ease); }
+.dk-card:hover{ border-color:var(--border-strong); }
+
+/* ---------- goal cards ---------- */
+.goal-card{ padding:16px; }
+.goal-card.completed{ opacity:.55; }
+.goal-card__row{ display:flex; align-items:flex-start; gap:12px; }
+.goal-check{ margin-top:2px; height:20px; width:20px; flex-shrink:0; border-radius:50%; border:2px solid var(--border-strong); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:border-color var(--duration) var(--ease), background var(--duration) var(--ease); }
+.goal-check:hover{ border-color:var(--accent); }
+.goal-check.done{ background:var(--accent); border-color:var(--accent); }
+.goal-check .icon{ width:12px; height:12px; stroke:#000; stroke-width:3; }
+.goal-card__title{ font-size:var(--text-sm); font-weight:600; line-height:1.4; }
+.goal-card__title.done{ text-decoration:line-through; color:var(--muted); }
+.goal-card__desc{ font-size:12.5px; color:var(--muted-strong); margin-top:4px; line-height:1.5; }
+.goal-card__actions{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+.goal-card__timeline{ margin-top:12px; }
+.timeline-toprow{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.timeline-label{ font-size:11px; font-weight:700; font-family:var(--font-mono); letter-spacing:.02em; }
+.timeline-label.level-normal{ color:var(--accent); }
+.timeline-label.level-soon{ color:var(--amber); }
+.timeline-label.level-urgent{ color:var(--urgent); }
+.timeline-label.level-overdue{ color:var(--red); }
+.timeline-date{ font-size:11px; color:var(--muted); }
+.timeline-track{ height:7px; width:100%; border-radius:999px; background:var(--card-elevated); border:1px solid var(--border); overflow:hidden; }
+.timeline-fill{ height:100%; border-radius:999px; transition:width .5s var(--ease-premium); }
+.timeline-fill.level-normal{ background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, transparent), var(--accent)); }
+.timeline-fill.level-soon{ background:linear-gradient(90deg, color-mix(in srgb, var(--amber) 70%, transparent), var(--amber)); }
+.timeline-fill.level-urgent{ background:linear-gradient(90deg, var(--amber), var(--red)); }
+.timeline-fill.level-overdue{ background:var(--red); }
+.pulse-urgent{ animation:pulseUrgent 1.6s ease-in-out infinite; }
+@keyframes pulseUrgent{ 0%,100%{ opacity:1; } 50%{ opacity:.5; } }
+.no-deadline{ font-size:11px; color:var(--muted); margin-top:8px; }
+.goal-card__foot{ margin-top:12px; }
+.on-schedule{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); padding:5px 9px; border-radius:var(--radius-sm); }
+.on-schedule .icon{ width:12px; height:12px; }
+.add-schedule-btn{ font-size:11px; font-weight:600; color:var(--accent); background:transparent; border:none; cursor:pointer; padding:0; }
+.add-schedule-btn:hover{ text-decoration:underline; }
+
+.empty-state{ display:none; text-align:center; padding:64px 16px; color:var(--muted); }
+.empty-state.show{ display:block; }
+.empty-state .icon{ width:36px; height:36px; margin:0 auto 12px; opacity:.4; }
+.empty-state p{ font-size:var(--text-sm); margin:0; }
+
+.list{ display:flex; flex-direction:column; gap:12px; }
+
+/* ---------- schedule ---------- */
+.date-row{ display:flex; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+.date-input{ font-size:var(--text-sm); font-weight:500; padding:9px 12px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--card); }
+.date-today-btn{ font-size:var(--text-sm); font-weight:600; color:var(--accent); background:transparent; border:none; cursor:pointer; padding:8px 10px; border-radius:var(--radius-md); }
+.date-today-btn:hover{ background:var(--card); }
+.schedule-progress{ margin-left:auto; font-size:12px; font-family:var(--font-mono); color:var(--muted); }
+
+.task-row{ display:flex; align-items:center; gap:12px; padding:12px 16px; }
+.task-row.completed .task-row__title{ text-decoration:line-through; color:var(--muted); }
+.task-row__body{ min-width:0; flex:1; }
+.task-row__title{ font-size:var(--text-sm); font-weight:500; }
+.task-row__goal{ font-size:11px; color:var(--accent); margin-top:2px; display:flex; align-items:center; gap:5px; }
+.task-row__goal .icon{ width:11px; height:11px; }
+.task-row__time{ font-family:var(--font-mono); font-size:12px; color:var(--muted); flex-shrink:0; }
+.task-row__actions{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+
+/* ---------- ideas ---------- */
+.idea-capture{ position:relative; margin-bottom:16px; }
+.idea-capture textarea{ padding-right:88px; min-height:64px; }
+.idea-capture button{ position:absolute; right:8px; bottom:8px; }
+
+.assistant-box{ border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--card); padding:12px; margin-bottom:20px; }
+.assistant-row{ display:flex; align-items:center; gap:8px; }
+.assistant-row .icon{ color:var(--accent); flex-shrink:0; }
+.assistant-row input{ flex:1; min-width:0; background:transparent; border:none; outline:none; font-size:var(--text-sm); }
+.assistant-row input::placeholder{ color:var(--muted); }
+.assistant-ask-btn{ font-size:var(--text-xs); font-weight:700; color:var(--accent); background:transparent; border:none; cursor:pointer; padding:4px 6px; flex-shrink:0; }
+.assistant-reply{ display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:var(--text-sm); }
+.assistant-reply.show{ display:block; }
+.assistant-reply__matches{ margin-top:8px; display:flex; flex-direction:column; gap:6px; }
+.assistant-match{ font-size:12px; background:var(--card-elevated); border-radius:var(--radius-sm); padding:8px 10px; }
+.assistant-match__meta{ display:block; font-size:10px; color:var(--muted); margin-top:3px; }
+
+.idea-toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.idea-search{ position:relative; flex:1; min-width:180px; }
+.idea-search .icon{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); }
+.idea-search input{ width:100%; padding-left:34px; }
+.tag-filters{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.tag-chip{ font-size:11px; font-weight:500; padding:5px 10px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--card); color:var(--muted-strong); cursor:pointer; transition:background var(--duration) var(--ease), border-color var(--duration) var(--ease), color var(--duration) var(--ease); }
+.tag-chip:hover{ border-color:var(--border-strong); }
+.tag-chip.active{ background:var(--accent); border-color:var(--accent); color:#000; }
+
+.idea-card{ padding:14px 16px; }
+.idea-card.archived{ opacity:.5; }
+.idea-card__row{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.idea-card__text{ font-size:var(--text-sm); line-height:1.55; white-space:pre-wrap; word-break:break-word; }
+.idea-card__actions{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+.idea-card__meta{ display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.idea-card__time{ font-size:11px; color:var(--muted); }
+.idea-tag{ font-size:10px; font-weight:500; background:var(--card-elevated); color:var(--muted-strong); padding:2px 7px; border-radius:var(--radius-sm); }
+.idea-promoted{ font-size:10px; font-weight:600; color:var(--accent); }
+
+/* ---------- modals ---------- */
+.modal{ display:none; position:fixed; inset:0; z-index:50; align-items:center; justify-content:center; padding:16px; }
+.modal.open{ display:flex; }
+.modal__overlay{ position:absolute; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(2px); }
+.modal__panel{ position:relative; width:100%; max-width:420px; max-height:90vh; overflow-y:auto; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px; animation:fadeIn .18s var(--ease-premium); }
+.modal__head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.modal__title{ font-family:var(--font-serif); font-style:italic; font-size:20px; }
+.modal form{ display:flex; flex-direction:column; gap:14px; }
+.modal__grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.modal__actions{ display:flex; align-items:center; gap:8px; padding-top:6px; }
+
+.confirm-panel{ max-width:320px; text-align:center; }
+.confirm-text{ font-size:var(--text-sm); margin:0 0 16px; color:var(--muted-strong); }
+.confirm-actions{ display:flex; gap:8px; }
+.dk-btn--danger{ background:var(--red); color:#fff; }
+.dk-btn--danger:hover{ background:color-mix(in srgb, var(--red) 85%, black); }
+
+.toast{ position:fixed; bottom:76px; left:50%; transform:translate(-50%,8px); opacity:0; pointer-events:none; z-index:60; background:var(--fg); color:var(--bg); font-size:13px; font-weight:500; padding:10px 18px; border-radius:var(--radius-pill); transition:opacity var(--duration) var(--ease), transform var(--duration) var(--ease); }
+.toast.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+@media(min-width:1024px){ .toast{ bottom:24px; } }
 </style>
 </head>
-<body class="bg-canvas dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased">
+<body>
 
-<div class="min-h-screen flex flex-col lg:flex-row">
+<!-- icon sprite -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8M10 13h4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></symbol>
+</svg>
+
+<div class="app-shell">
 
   <!-- Sidebar (desktop) -->
-  <aside class="hidden lg:flex lg:flex-col w-60 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0">
-    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-slate-200 dark:border-slate-800">
-      <span class="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0" aria-hidden="true">
-        <svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-accent" fill="currentColor"><path d="M12 6l1.8 4.2L18 12l-4.2 1.8L12 18l-1.8-4.2L6 12l4.2-1.8Z"/></svg>
-      </span>
-      <span class="font-bold tracking-tight text-[15px]">Compass</span>
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      <span class="sidebar__mark"><span></span></span>
+      <span class="sidebar__name">Compass</span>
     </div>
 
-    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="Primary">
-      <button data-section="long" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150" aria-current="page">
-        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg>
+    <nav aria-label="Primary">
+      <button data-section="long" class="nav-btn" aria-current="page">
+        <svg class="icon"><use href="#i-target"/></svg>
         Long-term Goals
       </button>
-      <button data-section="short" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150">
-        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <button data-section="short" class="nav-btn">
+        <svg class="icon"><use href="#i-clock"/></svg>
         Short-term Goals
       </button>
-      <button data-section="schedule" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150">
-        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <button data-section="schedule" class="nav-btn">
+        <svg class="icon"><use href="#i-calendar"/></svg>
         Daily Schedule
       </button>
-      <button data-section="ideas" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150">
-        <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+      <button data-section="ideas" class="nav-btn">
+        <svg class="icon"><use href="#i-lightbulb"/></svg>
         Idea Dump
-        <span id="idea-count-badge" class="ml-auto text-[11px] font-semibold bg-accent/20 text-amber-700 dark:text-accent px-1.5 py-0.5 rounded-md app-hidden"></span>
+        <span id="idea-count-badge" class="nav-badge"></span>
       </button>
     </nav>
 
-    <div class="p-3 border-t border-slate-200 dark:border-slate-800">
-      <button id="theme-toggle" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150">
-        <svg id="theme-icon" class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg>
-        <span id="theme-label">Dark mode</span>
+    <div class="sidebar__foot">
+      <button id="theme-toggle" class="theme-toggle">
+        <svg class="icon"><use href="#i-moon"/></svg>
+        <span id="theme-label">Light mode</span>
       </button>
-      <div id="sync-indicator" class="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 dark:text-slate-500">
-        <span id="sync-dot" class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-        <span id="sync-text">Connecting…</span>
+      <div class="sync-row">
+        <span id="sync-dot" class="sync-dot"></span>
+        <span id="sync-text">Connecting&hellip;</span>
       </div>
     </div>
   </aside>
 
   <!-- Mobile top bar -->
-  <header class="lg:hidden sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-14 flex items-center justify-between px-4">
-    <div class="flex items-center gap-2">
-      <span class="h-7 w-7 rounded-lg bg-primary flex items-center justify-center" aria-hidden="true">
-        <svg viewBox="0 0 24 24" class="h-4 w-4 text-accent" fill="currentColor"><path d="M12 6l1.8 4.2L18 12l-4.2 1.8L12 18l-1.8-4.2L6 12l4.2-1.8Z"/></svg>
-      </span>
-      <span class="font-bold text-sm" id="mobile-title">Long-term Goals</span>
+  <header class="mobile-header">
+    <div class="mobile-header__brand">
+      <span class="mobile-header__mark"><span></span></span>
+      <span class="mobile-header__title" id="mobile-title">Long-term Goals</span>
     </div>
-    <button id="theme-toggle-mobile" class="p-2 rounded-lg text-slate-500 dark:text-slate-400" aria-label="Toggle theme">
-      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg>
+    <button id="theme-toggle-mobile" class="icon-btn" aria-label="Toggle theme">
+      <svg class="icon"><use href="#i-moon"/></svg>
     </button>
   </header>
 
   <!-- Main -->
-  <main class="flex-1 min-w-0 pb-20 lg:pb-8">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+  <main class="main">
+    <div class="container">
 
       <!-- Reminder banner (idea resurfacing) -->
-      <div id="reminder-banner" class="app-hidden fade-in mb-5 rounded-xl border border-accent/30 bg-amber-50 dark:bg-amber-500/10 p-4">
-        <div class="flex items-start gap-3">
-          <span class="h-8 w-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0 text-amber-600 dark:text-accent">
-            <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
-          </span>
-          <div class="min-w-0 flex-1">
-            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-accent mb-0.5">Remember this?</p>
-            <p id="reminder-text" class="text-sm text-slate-700 dark:text-slate-200 break-words"></p>
-            <p id="reminder-meta" class="text-xs text-slate-400 mt-1"></p>
-            <div class="flex flex-wrap gap-2 mt-2.5">
-              <button id="reminder-promote" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-primary text-white hover:bg-primary-light transition-colors">Turn into a goal</button>
-              <button id="reminder-snooze" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Show another</button>
-              <button id="reminder-dismiss" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-auto">Dismiss</button>
+      <div id="reminder-banner" class="reminder">
+        <div class="reminder__row">
+          <span class="reminder__icon"><svg class="icon"><use href="#i-lightbulb"/></svg></span>
+          <div style="min-width:0; flex:1;">
+            <p class="reminder__eyebrow">Remember this?</p>
+            <p id="reminder-text" class="reminder__text"></p>
+            <p id="reminder-meta" class="reminder__meta"></p>
+            <div class="reminder__actions">
+              <button id="reminder-promote" class="dk-btn dk-btn--primary" style="padding:7px 12px; font-size:12px;">Turn into a goal</button>
+              <button id="reminder-snooze" class="dk-btn dk-btn--ghost" style="padding:7px 12px; font-size:12px;">Show another</button>
+              <button id="reminder-dismiss" class="dk-btn dk-btn--ghost" style="padding:7px 12px; font-size:12px; margin-left:auto; border-color:transparent;">Dismiss</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Section: Long-term / Short-term Goals (shared template) -->
-      <section id="section-long" class="goal-section">
-        <div class="flex items-center justify-between mb-1">
-          <h1 class="text-xl font-bold tracking-tight">Long-term Goals</h1>
-          <button data-add-goal="long" class="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-3.5 py-2 rounded-lg hover:bg-primary-light transition-colors">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            New Goal
-          </button>
+      <!-- Section: Long-term Goals -->
+      <section id="section-long" class="view active">
+        <div class="view__head">
+          <h1 class="view__title">Long-term Goals</h1>
+          <button data-add-goal="long" class="dk-btn dk-btn--primary"><svg class="icon"><use href="#i-plus"/></svg>New Goal</button>
         </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">The big picture. Where you're headed over months and years.</p>
-        <div data-list="long" class="space-y-3"></div>
-        <div data-empty="long" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
-          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg>
-          <p class="text-sm">No long-term goals yet. Set your first one.</p>
+        <p class="view__sub">The big picture. Where you're headed over months and years.</p>
+        <div data-list="long" class="list"></div>
+        <div data-empty="long" class="empty-state">
+          <svg class="icon" style="width:36px;height:36px"><use href="#i-target"/></svg>
+          <p>No long-term goals yet. Set your first one.</p>
         </div>
       </section>
 
-      <section id="section-short" class="goal-section app-hidden">
-        <div class="flex items-center justify-between mb-1">
-          <h1 class="text-xl font-bold tracking-tight">Short-term Goals</h1>
-          <button data-add-goal="short" class="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-3.5 py-2 rounded-lg hover:bg-primary-light transition-colors">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            New Goal
-          </button>
+      <!-- Section: Short-term Goals -->
+      <section id="section-short" class="view">
+        <div class="view__head">
+          <h1 class="view__title">Short-term Goals</h1>
+          <button data-add-goal="short" class="dk-btn dk-btn--primary"><svg class="icon"><use href="#i-plus"/></svg>New Goal</button>
         </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">The next few days or weeks. Concrete, near-term wins.</p>
-        <div data-list="short" class="space-y-3"></div>
-        <div data-empty="short" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
-          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          <p class="text-sm">No short-term goals yet. Add one to get moving.</p>
+        <p class="view__sub">The next few days or weeks. Concrete, near-term wins.</p>
+        <div data-list="short" class="list"></div>
+        <div data-empty="short" class="empty-state">
+          <svg class="icon" style="width:36px;height:36px"><use href="#i-clock"/></svg>
+          <p>No short-term goals yet. Add one to get moving.</p>
         </div>
       </section>
 
       <!-- Section: Daily Schedule -->
-      <section id="section-schedule" class="app-hidden">
-        <div class="flex items-center justify-between mb-1 flex-wrap gap-3">
-          <h1 class="text-xl font-bold tracking-tight">Daily Schedule</h1>
-          <button data-add-task class="flex items-center gap-1.5 text-sm font-semibold bg-primary text-white px-3.5 py-2 rounded-lg hover:bg-primary-light transition-colors">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            Add Task
-          </button>
+      <section id="section-schedule" class="view">
+        <div class="view__head">
+          <h1 class="view__title">Daily Schedule</h1>
+          <button data-add-task class="dk-btn dk-btn--primary"><svg class="icon"><use href="#i-plus"/></svg>Add Task</button>
         </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Plan the day, then check things off.</p>
+        <p class="view__sub">Plan the day, then check things off.</p>
 
-        <div class="flex items-center gap-2 mb-5">
-          <button id="date-prev" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Previous day">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <input id="schedule-date" type="date" class="text-sm font-medium px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" />
-          <button id="date-next" class="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Next day">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-          <button id="date-today" class="text-sm font-semibold text-primary dark:text-primary-light px-2.5 py-2 rounded-lg hover:bg-primary/10 transition-colors">Today</button>
-          <span id="schedule-progress" class="ml-auto text-xs font-medium text-slate-400"></span>
+        <div class="date-row">
+          <button id="date-prev" class="icon-btn" aria-label="Previous day"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+          <input id="schedule-date" type="date" class="date-input" />
+          <button id="date-next" class="icon-btn" aria-label="Next day"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+          <button id="date-today" class="date-today-btn">Today</button>
+          <span id="schedule-progress" class="schedule-progress"></span>
         </div>
 
-        <div data-list="schedule" class="space-y-2"></div>
-        <div data-empty="schedule" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
-          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <p class="text-sm">Nothing scheduled for this day.</p>
+        <div data-list="schedule" class="list"></div>
+        <div data-empty="schedule" class="empty-state">
+          <svg class="icon" style="width:36px;height:36px"><use href="#i-calendar"/></svg>
+          <p>Nothing scheduled for this day.</p>
         </div>
       </section>
 
       <!-- Section: Idea Dump -->
-      <section id="section-ideas" class="app-hidden">
-        <h1 class="text-xl font-bold tracking-tight mb-1">Idea Dump</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Capture the thought now, make sense of it later. Every entry is timestamped and searchable.</p>
+      <section id="section-ideas" class="view">
+        <h1 class="view__title">Idea Dump</h1>
+        <p class="view__sub">Capture the thought now, make sense of it later. Every entry is timestamped and searchable.</p>
 
-        <form id="idea-form" class="mb-4">
-          <div class="relative">
-            <textarea id="idea-input" rows="2" placeholder="What's on your mind? (Enter to save, Shift+Enter for a new line, #tag to categorize)" class="w-full resize-none text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 pl-3.5 pr-24 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40"></textarea>
-            <button type="submit" class="absolute right-2 bottom-2 text-xs font-semibold bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-light transition-colors">Save</button>
-          </div>
+        <form id="idea-form" class="idea-capture">
+          <textarea id="idea-input" rows="2" class="dk-textarea" placeholder="What's on your mind? (Enter to save, Shift+Enter for a new line, #tag to categorize)"></textarea>
+          <button type="submit" class="dk-btn dk-btn--primary" style="padding:7px 14px; font-size:12px;">Save</button>
         </form>
 
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 mb-5">
-          <form id="assistant-form" class="flex items-center gap-2">
-            <svg class="h-4 w-4 shrink-0 text-primary dark:text-primary-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            <input id="assistant-input" type="text" placeholder="Ask your assistant about past ideas… e.g. “what did I think about the podcast?”" class="flex-1 text-sm bg-transparent focus:outline-none min-w-0" />
-            <button type="submit" class="text-xs font-semibold text-primary dark:text-primary-light px-2 py-1 shrink-0">Ask</button>
+        <div class="assistant-box">
+          <form id="assistant-form" class="assistant-row">
+            <svg class="icon"><use href="#i-layers"/></svg>
+            <input id="assistant-input" type="text" placeholder="Ask your assistant about past ideas&hellip; e.g. &ldquo;what did I think about the podcast?&rdquo;" />
+            <button type="submit" class="assistant-ask-btn">Ask</button>
           </form>
-          <div id="assistant-reply" class="app-hidden mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-sm"></div>
+          <div id="assistant-reply" class="assistant-reply"></div>
         </div>
 
-        <div class="flex items-center gap-2 mb-4 flex-wrap">
-          <div class="relative flex-1 min-w-[180px]">
-            <svg class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input id="idea-search" type="text" placeholder="Search ideas…" class="w-full text-sm pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        <div class="idea-toolbar">
+          <div class="idea-search">
+            <svg class="icon"><use href="#i-search"/></svg>
+            <input id="idea-search" type="text" class="dk-input" placeholder="Search ideas&hellip;" />
           </div>
-          <div id="tag-filters" class="flex items-center gap-1.5 flex-wrap"></div>
+          <div id="tag-filters" class="tag-filters"></div>
         </div>
 
-        <div data-list="ideas" class="space-y-2.5"></div>
-        <div data-empty="ideas" class="app-hidden text-center py-16 text-slate-400 dark:text-slate-600">
-          <svg class="h-10 w-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
-          <p class="text-sm">Nothing dumped yet. Type above whenever a thought strikes.</p>
+        <div data-list="ideas" class="list"></div>
+        <div data-empty="ideas" class="empty-state">
+          <svg class="icon" style="width:36px;height:36px"><use href="#i-lightbulb"/></svg>
+          <p>Nothing dumped yet. Type above whenever a thought strikes.</p>
         </div>
       </section>
 
@@ -234,153 +457,147 @@
 </div>
 
 <!-- Mobile bottom nav -->
-<nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-stretch" aria-label="Primary">
-  <button data-section="long" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium" aria-current="page">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg>
+<nav class="mobile-nav" aria-label="Primary">
+  <button data-section="long" class="nav-btn-m" aria-current="page">
+    <svg class="icon"><use href="#i-target"/></svg>
     Long
   </button>
-  <button data-section="short" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+  <button data-section="short" class="nav-btn-m">
+    <svg class="icon"><use href="#i-clock"/></svg>
     Short
   </button>
-  <button data-section="schedule" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+  <button data-section="schedule" class="nav-btn-m">
+    <svg class="icon"><use href="#i-calendar"/></svg>
     Schedule
   </button>
-  <button data-section="ideas" class="nav-btn-m flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium relative">
-    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+  <button data-section="ideas" class="nav-btn-m">
+    <svg class="icon"><use href="#i-lightbulb"/></svg>
     Ideas
   </button>
 </nav>
 
-<!-- Floating quick-capture button (mobile, visible on non-idea sections) -->
-<button id="fab-idea" class="lg:hidden app-hidden fixed bottom-20 right-4 z-30 h-12 w-12 rounded-full bg-accent text-slate-900 shadow-lg flex items-center justify-center" aria-label="Quick capture idea">
-  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+<!-- Floating quick-capture button (mobile) -->
+<button id="fab-idea" class="fab" aria-label="Quick capture idea">
+  <svg class="icon"><use href="#i-lightbulb"/></svg>
 </button>
 
 <!-- Goal modal -->
-<div id="goal-modal" class="app-hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
-  <div class="relative bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-5 sm:p-6 shadow-xl fade-in max-h-[90vh] overflow-y-auto">
-    <div class="flex items-center justify-between mb-4">
-      <h2 id="goal-modal-title" class="text-lg font-bold">New Goal</h2>
-      <button data-close-modal class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
+<div id="goal-modal" class="modal">
+  <div class="modal__overlay" data-close-modal></div>
+  <div class="modal__panel">
+    <div class="modal__head">
+      <h2 id="goal-modal-title" class="modal__title">New Goal</h2>
+      <button class="icon-btn" data-close-modal aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
-    <form id="goal-form" class="space-y-4">
+    <form id="goal-form">
       <input type="hidden" id="goal-id" />
-      <div>
-        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Title</label>
-        <input id="goal-title" required type="text" placeholder="e.g. Run a half marathon" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      <div class="dk-field">
+        <label class="dk-field__label" for="goal-title">Title</label>
+        <input id="goal-title" required type="text" class="dk-input" placeholder="e.g. Run a half marathon" />
       </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Description <span class="font-normal text-slate-400">(optional)</span></label>
-        <textarea id="goal-desc" rows="2" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"></textarea>
+      <div class="dk-field">
+        <label class="dk-field__label" for="goal-desc">Description <span class="dk-field__hint">(optional)</span></label>
+        <textarea id="goal-desc" rows="2" class="dk-textarea"></textarea>
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Type</label>
-          <select id="goal-term" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40">
+      <div class="modal__grid2">
+        <div class="dk-field">
+          <label class="dk-field__label" for="goal-term">Type</label>
+          <select id="goal-term" class="dk-select">
             <option value="long">Long-term</option>
             <option value="short">Short-term</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Deadline <span class="font-normal text-slate-400">(optional)</span></label>
-          <input id="goal-deadline" type="date" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        <div class="dk-field">
+          <label class="dk-field__label" for="goal-deadline">Deadline <span class="dk-field__hint">(optional)</span></label>
+          <input id="goal-deadline" type="date" class="dk-input" />
         </div>
       </div>
-      <div class="flex items-center gap-2 pt-2">
-        <button type="submit" class="flex-1 text-sm font-semibold bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-light transition-colors">Save Goal</button>
-        <button type="button" data-close-modal class="text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+      <div class="modal__actions">
+        <button type="submit" class="dk-btn dk-btn--primary dk-btn--block">Save Goal</button>
+        <button type="button" class="dk-btn dk-btn--ghost" data-close-modal>Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
 <!-- Move-to-schedule modal -->
-<div id="move-modal" class="app-hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
-  <div class="relative bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 sm:p-6 shadow-xl fade-in">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-bold">Add to Schedule</h2>
-      <button data-close-modal class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
+<div id="move-modal" class="modal">
+  <div class="modal__overlay" data-close-modal></div>
+  <div class="modal__panel">
+    <div class="modal__head">
+      <h2 class="modal__title">Add to Schedule</h2>
+      <button class="icon-btn" data-close-modal aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
-    <form id="move-form" class="space-y-4">
+    <form id="move-form">
       <input type="hidden" id="move-goal-id" />
-      <div>
-        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Task title</label>
-        <input id="move-title" required type="text" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      <div class="dk-field">
+        <label class="dk-field__label" for="move-title">Task title</label>
+        <input id="move-title" required type="text" class="dk-input" />
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Date</label>
-          <input id="move-date" required type="date" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      <div class="modal__grid2">
+        <div class="dk-field">
+          <label class="dk-field__label" for="move-date">Date</label>
+          <input id="move-date" required type="date" class="dk-input" />
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Time <span class="font-normal text-slate-400">(optional)</span></label>
-          <input id="move-time" type="time" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        <div class="dk-field">
+          <label class="dk-field__label" for="move-time">Time <span class="dk-field__hint">(optional)</span></label>
+          <input id="move-time" type="time" class="dk-input" />
         </div>
       </div>
-      <div class="flex items-center gap-2 pt-2">
-        <button type="submit" class="flex-1 text-sm font-semibold bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-light transition-colors">Add to Schedule</button>
-        <button type="button" data-close-modal class="text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+      <div class="modal__actions">
+        <button type="submit" class="dk-btn dk-btn--primary dk-btn--block">Add to Schedule</button>
+        <button type="button" class="dk-btn dk-btn--ghost" data-close-modal>Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
 <!-- Task modal -->
-<div id="task-modal" class="app-hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
-  <div class="relative bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 sm:p-6 shadow-xl fade-in">
-    <div class="flex items-center justify-between mb-4">
-      <h2 id="task-modal-title" class="text-lg font-bold">Add Task</h2>
-      <button data-close-modal class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
+<div id="task-modal" class="modal">
+  <div class="modal__overlay" data-close-modal></div>
+  <div class="modal__panel">
+    <div class="modal__head">
+      <h2 id="task-modal-title" class="modal__title">Add Task</h2>
+      <button class="icon-btn" data-close-modal aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
-    <form id="task-form" class="space-y-4">
+    <form id="task-form">
       <input type="hidden" id="task-id" />
-      <div>
-        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Task</label>
-        <input id="task-title" required type="text" placeholder="e.g. Write project brief" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      <div class="dk-field">
+        <label class="dk-field__label" for="task-title">Task</label>
+        <input id="task-title" required type="text" class="dk-input" placeholder="e.g. Write project brief" />
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Date</label>
-          <input id="task-date" required type="date" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+      <div class="modal__grid2">
+        <div class="dk-field">
+          <label class="dk-field__label" for="task-date">Date</label>
+          <input id="task-date" required type="date" class="dk-input" />
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Time <span class="font-normal text-slate-400">(optional)</span></label>
-          <input id="task-time" type="time" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+        <div class="dk-field">
+          <label class="dk-field__label" for="task-time">Time <span class="dk-field__hint">(optional)</span></label>
+          <input id="task-time" type="time" class="dk-input" />
         </div>
       </div>
-      <div class="flex items-center gap-2 pt-2">
-        <button type="submit" class="flex-1 text-sm font-semibold bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-light transition-colors">Save Task</button>
-        <button type="button" data-close-modal class="text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+      <div class="modal__actions">
+        <button type="submit" class="dk-btn dk-btn--primary dk-btn--block">Save Task</button>
+        <button type="button" class="dk-btn dk-btn--ghost" data-close-modal>Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
 <!-- Confirm dialog -->
-<div id="confirm-modal" class="app-hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-  <div class="modal-overlay absolute inset-0 bg-slate-900/50"></div>
-  <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-xs p-5 shadow-xl fade-in text-center">
-    <p id="confirm-text" class="text-sm mb-4">Are you sure?</p>
-    <div class="flex items-center gap-2">
-      <button id="confirm-yes" class="flex-1 text-sm font-semibold bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-500 transition-colors">Delete</button>
-      <button id="confirm-no" class="flex-1 text-sm font-semibold px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+<div id="confirm-modal" class="modal">
+  <div class="modal__overlay" data-close-modal></div>
+  <div class="modal__panel confirm-panel">
+    <p id="confirm-text" class="confirm-text">Are you sure?</p>
+    <div class="confirm-actions">
+      <button id="confirm-yes" class="dk-btn dk-btn--danger dk-btn--block">Delete</button>
+      <button id="confirm-no" class="dk-btn dk-btn--ghost dk-btn--block">Cancel</button>
     </div>
   </div>
 </div>
 
 <!-- Toast -->
-<div id="toast" class="app-hidden fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-lg shadow-lg fade-in"></div>
+<div id="toast" class="toast"></div>
 
 <script type="module" src="app.js"></script>
 </body>
