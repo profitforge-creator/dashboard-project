@@ -54,3 +54,50 @@ export function deadlineInfo(deadline: string | null): { pct: number; level: "no
   const pct = overdue ? 100 : Math.max(0, Math.min(100, 100 - (daysRemaining / 30) * 100));
   return { pct, level, label };
 }
+
+export interface GoalCountdown {
+  level: "overdue" | "urgent" | "normal";
+  pillLabel: string; // "6M LEFT", "22H LEFT", "5D LEFT", "OVERDUE"
+  longLabel: string; // "5m 55s left", "22h left", "Overdue 2d"
+  timePct: number; // 0-100, elapsed from createdAt to deadline
+}
+
+function roundedUnit(ms: number): { value: number; unit: "m" | "h" | "d" } {
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return { value: Math.max(mins, 1), unit: "m" };
+  const hrs = Math.round(ms / 3600000);
+  if (hrs < 24) return { value: hrs, unit: "h" };
+  return { value: Math.max(Math.round(ms / 86400000), 1), unit: "d" };
+}
+
+/** Precise, live-tickable countdown for a goal deadline — used by the Goals hero card and list rows. */
+export function goalCountdown(deadline: string, createdAt: string, now: Date = new Date()): GoalCountdown {
+  const end = new Date(deadline).getTime();
+  const start = new Date(createdAt).getTime();
+  const nowMs = now.getTime();
+  const msRemaining = end - nowMs;
+  const overdue = msRemaining < 0;
+  const absMs = Math.abs(msRemaining);
+
+  const totalSpan = Math.max(end - start, 1);
+  const timePct = overdue ? 100 : Math.max(0, Math.min(100, ((nowMs - start) / totalSpan) * 100));
+
+  const hoursRemaining = msRemaining / 3600000;
+  const level: GoalCountdown["level"] = overdue ? "overdue" : hoursRemaining <= 6 ? "urgent" : "normal";
+
+  const { value, unit } = roundedUnit(absMs);
+  const pillLabel = overdue ? "OVERDUE" : `${value}${unit.toUpperCase()} LEFT`;
+
+  let longLabel: string;
+  if (overdue) {
+    longLabel = absMs < 86400000 ? `Overdue ${roundedUnit(absMs).value}${roundedUnit(absMs).unit}` : `Overdue ${Math.floor(absMs / 86400000)}d`;
+  } else if (absMs < 3600000) {
+    const mins = Math.floor(absMs / 60000);
+    const secs = Math.floor((absMs % 60000) / 1000);
+    longLabel = `${mins}m ${secs}s left`;
+  } else {
+    longLabel = `${value}${unit} left`;
+  }
+
+  return { level, pillLabel, longLabel, timePct };
+}
