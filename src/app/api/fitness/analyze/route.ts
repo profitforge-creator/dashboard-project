@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { geminiClient, generateContentWithRetry } from "@/lib/gemini";
 
-async function urlToBase64(url: string): Promise<{ data: string; mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" }> {
+async function urlToBase64(url: string): Promise<{ data: string; mimeType: string }> {
   const res = await fetch(url);
   const buf = Buffer.from(await res.arrayBuffer());
-  const contentType = res.headers.get("content-type") ?? "image/jpeg";
-  const mediaType = (["image/jpeg", "image/png", "image/webp", "image/gif"] as const).includes(contentType as never)
-    ? (contentType as "image/jpeg" | "image/png" | "image/webp" | "image/gif")
-    : "image/jpeg";
-  return { data: buf.toString("base64"), mediaType };
+  const mimeType = res.headers.get("content-type") ?? "image/jpeg";
+  return { data: buf.toString("base64"), mimeType };
 }
 
 export async function POST(request: Request) {
@@ -19,8 +16,8 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "not_configured", text: "Photo analysis isn't connected yet — add an ANTHROPIC_API_KEY to enable it." }, { status: 200 });
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "not_configured", text: "Photo analysis isn't connected yet — add a GEMINI_API_KEY to enable it." }, { status: 200 });
   }
 
   const { photoUrl, dreamPhotoUrl, goalDescription, weightKg, heightCm } = (await request.json()) as {
@@ -36,15 +33,14 @@ export async function POST(request: Request) {
     const current = await urlToBase64(photoUrl);
     const dream = dreamPhotoUrl ? await urlToBase64(dreamPhotoUrl) : null;
 
-    const content: Anthropic.Messages.ContentBlockParam[] = [
-      { type: "text", text: "CURRENT PHOTO:" },
-      { type: "image", source: { type: "base64", media_type: current.mediaType, data: current.data } },
+    const parts: ({ text: string } | { inlineData: { mimeType: string; data: string } })[] = [
+      { text: "CURRENT PHOTO:" },
+      { inlineData: { mimeType: current.mimeType, data: current.data } },
     ];
     if (dream) {
-      content.push({ type: "text", text: "DREAM / TARGET PHYSIQUE PHOTO:" }, { type: "image", source: { type: "base64", media_type: dream.mediaType, data: dream.data } });
+      parts.push({ text: "DREAM / TARGET PHYSIQUE PHOTO:" }, { inlineData: { mimeType: dream.mimeType, data: dream.data } });
     }
-    content.push({
-      type: "text",
+    parts.push({
       text:
         `Goal: ${goalDescription || "General fitness improvement"}\n` +
         (heightCm ? `Height: ${heightCm}cm\n` : "") +
@@ -56,19 +52,20 @@ export async function POST(request: Request) {
         `"next_steps": string[] (4-6 concrete, specific actions — training, nutrition, and non-fitness habits that affect the goal)}`,
     });
 
-    const client = new Anthropic();
-    const response = await client.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 1536,
-      system:
-        "You are a knowledgeable, direct physique/fitness coach analyzing a private user's own progress photo inside their personal dashboard. " +
-        "Be specific and practical, never vague. You are not a doctor — do not diagnose medical conditions, only give general fitness/training/nutrition guidance. " +
-        "Respond with raw JSON only.",
-      messages: [{ role: "user", content }],
+    const ai = geminiClient();
+    const response = await generateContentWithRetry(ai, {
+      model: "gemini-flash-lite-latest",
+      contents: [{ role: "user", parts }],
+      config: {
+        systemInstruction:
+          "You are a knowledgeable, direct physique/fitness coach analyzing a private user's own progress photo inside their personal dashboard. " +
+          "Be specific and practical, never vague. You are not a doctor — do not diagnose medical conditions, only give general fitness/training/nutrition guidance. " +
+          "Respond with raw JSON only.",
+        responseMimeType: "application/json",
+      },
     });
 
-    const textBlock = response.content.find((b) => b.type === "text");
-    const raw = textBlock?.type === "text" ? textBlock.text : "{}";
+    const raw = response.text ?? "{}";
     let parsed: { analysis?: string; focus_areas?: string[]; estimated_weeks?: number; next_steps?: string[] };
     try {
       const match = raw.match(/\{[\s\S]*\}/);

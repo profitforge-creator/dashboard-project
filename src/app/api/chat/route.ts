@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { geminiClient, generateContentWithRetry } from "@/lib/gemini";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -9,9 +9,9 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json(
-      { error: "not_configured", text: "Amari's chat isn't connected yet — add an ANTHROPIC_API_KEY to enable it." },
+      { error: "not_configured", text: "Amari's chat isn't connected yet — add a GEMINI_API_KEY to enable it." },
       { status: 200 }
     );
   }
@@ -29,22 +29,22 @@ export async function POST(request: Request) {
   ]);
 
   try {
-    const client = new Anthropic();
-    const response = await client.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 1024,
-      system:
-        `You are Amari, a personal life-coaching assistant inside the user's private dashboard. ` +
-        `Coaching personality: ${profile?.coaching_personality ?? "direct"}. Be concise, warm, and practical — a few sentences, not an essay. ` +
-        `Ground answers in the user's real goals and tasks below when relevant. Never invent data you weren't given.\n\n` +
-        `Active goals:\n${JSON.stringify(goals ?? [])}\n\nRecent tasks:\n${JSON.stringify(tasks ?? [])}`,
-      messages: [
-        ...(history ?? []).map((h) => ({ role: h.role, content: h.content })),
-        { role: "user" as const, content: message },
+    const ai = geminiClient();
+    const response = await generateContentWithRetry(ai, {
+      model: "gemini-flash-lite-latest",
+      contents: [
+        ...(history ?? []).map((h) => ({ role: h.role === "assistant" ? ("model" as const) : ("user" as const), parts: [{ text: h.content }] })),
+        { role: "user" as const, parts: [{ text: message }] },
       ],
+      config: {
+        systemInstruction:
+          `You are Amari, a personal life-coaching assistant inside the user's private dashboard. ` +
+          `Coaching personality: ${profile?.coaching_personality ?? "direct"}. Be concise, warm, and practical — a few sentences, not an essay. ` +
+          `Ground answers in the user's real goals and tasks below when relevant. Never invent data you weren't given.\n\n` +
+          `Active goals:\n${JSON.stringify(goals ?? [])}\n\nRecent tasks:\n${JSON.stringify(tasks ?? [])}`,
+      },
     });
-    const textBlock = response.content.find((b) => b.type === "text");
-    return NextResponse.json({ text: textBlock?.type === "text" ? textBlock.text : "…" });
+    return NextResponse.json({ text: response.text ?? "…" });
   } catch (err) {
     console.error("amari chat error", err);
     return NextResponse.json({ error: "chat_failed", text: "Amari couldn't respond just now — try again in a moment." }, { status: 200 });
