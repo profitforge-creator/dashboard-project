@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Bell,
   Calendar,
   Download,
+  FlaskConical,
   Flame,
   Globe,
   Heart,
@@ -282,6 +284,18 @@ export function ProfileClient({ profile: initialProfile, integrations, completed
             <button onClick={deleteAllData} className="rounded-full border border-error/40 px-3 py-1.5 text-xs font-semibold text-error">
               Delete
             </button>
+          }
+        />
+      </SettingsSection>
+
+      <SettingsSection title="Developer">
+        <Row
+          icon={FlaskConical}
+          label="Design lab"
+          control={
+            <Link href="/design-lab" className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary hover:text-text">
+              Open
+            </Link>
           }
         />
       </SettingsSection>
