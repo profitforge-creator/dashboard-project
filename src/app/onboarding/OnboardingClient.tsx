@@ -82,7 +82,7 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
     true;
 
   return (
-    <main className="flex min-h-dvh flex-col bg-bg px-6 py-6">
+    <main className="flex min-h-dvh flex-col bg-bg px-6 pb-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <div className="mb-8 flex items-center gap-3">
           <button

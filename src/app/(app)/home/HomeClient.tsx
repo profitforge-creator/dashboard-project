@@ -266,19 +266,16 @@ export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSes
         </div>
       </section>
 
-      {/* Spacer so the fixed action bar below never overlaps the last section */}
-      <div className="h-24 lg:h-20" aria-hidden="true" />
-
-      <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-30 mx-auto flex max-w-3xl gap-2 px-4 sm:px-6 lg:bottom-4 lg:left-64 lg:px-8">
+      <div className="flex gap-2">
         <button
           onClick={() => setChatOpen(true)}
-          className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-blue text-[15px] font-semibold text-white shadow-lg shadow-blue/20 backdrop-blur transition-colors hover:bg-blue/90"
+          className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-blue text-[15px] font-semibold text-white transition-colors hover:bg-blue/90"
         >
           <MessageCircle className="h-4.5 w-4.5" strokeWidth={2} /> Chat with Amari
         </button>
         <Link
           href="/focus"
-          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card-secondary px-5 text-[15px] font-semibold text-text shadow-lg backdrop-blur transition-colors hover:bg-card"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card-secondary px-5 text-[15px] font-semibold text-text transition-colors hover:bg-card"
         >
           <Play className="h-4 w-4" strokeWidth={2} /> Start Focus
         </Link>
