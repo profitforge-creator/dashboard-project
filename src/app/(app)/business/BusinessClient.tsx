@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Edit2, Lightbulb, Rocket, Layers, AtSign, Instagram, Youtube, Music2, Globe, Sparkles, TrendingUp } from "lucide-react";
 import type {
@@ -19,6 +19,9 @@ import { SegmentedControl } from "@/components/SegmentedControl";
 import { EmptyState } from "@/components/EmptyState";
 import { ProgressRing } from "@/components/ProgressRing";
 import { AreaChart } from "@/components/AreaChart";
+import { BarChart } from "@/components/BarChart";
+import { DonutChart } from "@/components/DonutChart";
+import { PerformanceChart } from "@/components/PerformanceChart";
 import { Sheet } from "@/components/Sheet";
 import { Button } from "@/components/Button";
 import { ChatSheet } from "@/components/ChatSheet";
@@ -57,6 +60,23 @@ function dateLabel(iso: string) {
   return `${Number(m)}/${Number(d)}`;
 }
 
+type GraphPeriod = "week" | "month";
+const GRAPH_PERIOD_DAYS: Record<GraphPeriod, number> = { week: 7, month: 30 };
+const WEEKDAY_NARROW = ["S", "M", "T", "W", "T", "F", "S"];
+function weekdayLabel(iso: string) {
+  return WEEKDAY_NARROW[new Date(iso + "T12:00:00").getDay()];
+}
+function lastNDays(n: number): string[] {
+  const days: string[] = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
 export function BusinessClient({ ideas, apps, models, accounts, metrics }: BusinessClientProps) {
   const router = useRouter();
   const toast = useToast();
@@ -64,6 +84,14 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
   const [tab, setTab] = useState<Tab>("overview");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState<string | undefined>(undefined);
+
+  // `graphDays` depends on "now" (weekday labels + which days count as "the last N days"), which
+  // can differ between the server render and client hydration (server clock/locale vs browser's) —
+  // so it's computed client-only, after mount, same fix as the Health page's hydration bug.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const [graphPeriod, setGraphPeriod] = useState<GraphPeriod>("week");
+  const graphDays = useMemo(() => (mounted ? lastNDays(GRAPH_PERIOD_DAYS[graphPeriod]) : []), [graphPeriod, mounted]);
 
   function askAmari(text: string) {
     setChatMessage(text);
@@ -239,11 +267,61 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
   }, [metrics]);
 
   const totalFollowers = [...latestByAccount.values()].reduce((s, m) => s + (m.followers ?? 0), 0);
-  const since30 = new Date();
-  since30.setDate(since30.getDate() - 30);
-  const since30ISO = since30.toISOString().slice(0, 10);
-  const totalAdSpend30d = metrics.filter((m) => m.log_date >= since30ISO).reduce((s, m) => s + (m.ad_cost ?? 0), 0);
-  const totalOrganicViews30d = metrics.filter((m) => m.log_date >= since30ISO).reduce((s, m) => s + (m.organic_views ?? 0), 0);
+  // Same hydration hazard as `graphDays`: a "30 days ago" cutoff computed fresh on both the server
+  // render and client hydration can land on different sides of a UTC-day boundary. Deferring it to
+  // client-only, post-mount avoids any server/client mismatch (values briefly read 0/empty pre-mount).
+  const since30ISO = mounted
+    ? (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        return d.toISOString().slice(0, 10);
+      })()
+    : null;
+  const totalAdSpend30d = since30ISO ? metrics.filter((m) => m.log_date >= since30ISO).reduce((s, m) => s + (m.ad_cost ?? 0), 0) : 0;
+  const totalOrganicViews30d = since30ISO ? metrics.filter((m) => m.log_date >= since30ISO).reduce((s, m) => s + (m.organic_views ?? 0), 0) : 0;
+
+  // Total followers across all accounts, per day — forward-filling each account's last known
+  // reading (follower counts don't reset to 0 between log entries the way daily activity does).
+  const followerGrowthData = graphDays.map((day) => {
+    let sum = 0;
+    for (const acc of accounts) {
+      const upToDay = metrics.filter((m) => m.account_id === acc.id && m.log_date <= day && m.followers != null);
+      if (upToDay.length) {
+        const latest = upToDay.reduce((a, b) => (a.log_date > b.log_date ? a : b));
+        sum += latest.followers ?? 0;
+      }
+    }
+    return { label: weekdayLabel(day), value: sum };
+  });
+  const followerStart = followerGrowthData[0]?.value ?? 0;
+  const followerEnd = followerGrowthData[followerGrowthData.length - 1]?.value ?? 0;
+  const followerDelta = followerEnd - followerStart;
+  const followerTrendPct = followerStart > 0 ? Math.round((Math.abs(followerDelta) / followerStart) * 100) : followerEnd > 0 ? 100 : 0;
+
+  const ideaStatusData = (Object.keys(IDEA_STATUS_LABEL) as BusinessIdeaStatus[])
+    .map((s) => ({ label: IDEA_STATUS_LABEL[s], value: ideas.filter((i) => i.status === s).length }))
+    .filter((d) => d.value > 0);
+  const appStatusData = (Object.keys(APP_STATUS_LABEL) as BusinessAppStatus[])
+    .map((s) => ({ label: APP_STATUS_LABEL[s], value: apps.filter((a) => a.status === s).length }))
+    .filter((d) => d.value > 0);
+
+  const accountById = new Map(accounts.map((a) => [a.id, a]));
+  const adSpendByPlatform = since30ISO
+    ? Object.values(
+        metrics
+          .filter((m) => m.log_date >= since30ISO && m.ad_cost)
+          .reduce(
+            (acc, m) => {
+              const platform = accountById.get(m.account_id)?.platform;
+              if (!platform) return acc;
+              acc[platform] = acc[platform] ?? { label: PLATFORM_LABEL[platform], value: 0 };
+              acc[platform].value += m.ad_cost ?? 0;
+              return acc;
+            },
+            {} as Record<string, { label: string; value: number }>
+          )
+      ).map((d) => ({ ...d, value: Math.round(d.value * 100) / 100 }))
+    : [];
 
   async function addAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -345,6 +423,51 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
             <MetricCard icon={Layers} label="Ad spend · 30d" value={Math.round(totalAdSpend30d * 100)} format={(v) => currency(v / 100)} />
           </div>
           <p className="text-xs text-text-secondary">Organic views · 30d: {totalOrganicViews30d.toLocaleString()}</p>
+
+          {accounts.length > 0 && (
+            <PerformanceChart
+              title="Follower growth"
+              subtitleLines={["Total followers across all accounts"]}
+              data={followerGrowthData}
+              period={graphPeriod}
+              onPeriodChange={setGraphPeriod}
+              periods={[
+                { value: "week", label: "Week" },
+                { value: "month", label: "Month" },
+              ]}
+              statLabel="Total followers"
+              statValue={followerEnd.toLocaleString()}
+              delta={followerDelta !== 0 ? `${followerDelta > 0 ? "+" : ""}${followerDelta.toLocaleString()}` : undefined}
+              trendPct={followerGrowthData.length >= 2 ? `${followerTrendPct}%` : undefined}
+              trendDirection={followerDelta >= 0 ? "up" : "down"}
+              height={160}
+            />
+          )}
+
+          {(ideaStatusData.length > 0 || appStatusData.length > 0) && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {ideaStatusData.length > 0 && (
+                <div className="rounded-2xl border border-border bg-card p-5">
+                  <p className="mb-4 text-sm font-medium text-text">Ideas by status</p>
+                  <DonutChart data={ideaStatusData} centerValue={String(ideas.length)} centerLabel="ideas" />
+                </div>
+              )}
+              {appStatusData.length > 0 && (
+                <div className="rounded-2xl border border-border bg-card p-5">
+                  <p className="mb-4 text-sm font-medium text-text">Apps by status</p>
+                  <DonutChart data={appStatusData} centerValue={String(apps.length)} centerLabel="apps" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {adSpendByPlatform.length > 0 && (
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <p className="mb-1 text-sm font-medium text-text">Ad spend by platform · last 30d</p>
+              <p className="mb-3 text-xs text-text-secondary">Total spend per platform</p>
+              <BarChart data={adSpendByPlatform} unit="$" />
+            </div>
+          )}
 
           {models.length === 0 && apps.length === 0 && ideas.length === 0 && (
             <EmptyState icon={Rocket} title="Nothing tracked yet" description="Add an idea, an app, or a business model to get started." />
