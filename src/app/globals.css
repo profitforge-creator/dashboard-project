@@ -83,7 +83,10 @@ body {
   }
 }
 .animate-fade-in {
-  animation: fade-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* No `forwards`/`both` fill-mode: holding the final `translateY(0)` after the animation ends
+     is a non-`none` transform, which makes this element a containing block for any `position:
+     fixed` descendant (e.g. Sheet/Modal) — breaking their full-viewport centering and scrolling. */
+  animation: fade-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes pulse-glow {
