@@ -2,19 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, History, Timer as TimerIcon } from "lucide-react";
+import { Play, History, Timer as TimerIcon, Brain, GraduationCap, Dumbbell, Video, Briefcase, LineChart, BookOpen, Moon, Minus, Plus, Target } from "lucide-react";
 import type { FocusSession, Goal } from "@/lib/supabase/types";
 import { FocusSessionCard } from "@/components/FocusSessionCard";
 import { MetricCard } from "@/components/MetricCard";
-import { SegmentedControl } from "@/components/SegmentedControl";
 import { EmptyState } from "@/components/EmptyState";
 import { Sheet } from "@/components/Sheet";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 import { timeAgo } from "@/lib/utils";
 
-const PRESETS = ["Deep Work", "School", "Gym", "Content", "Business", "Trading Research", "Prayer / Bible Study", "Wind Down"] as const;
-const DURATIONS = [25, 45, 60, 90] as const;
+const PRESETS_META = [
+  { name: "Deep Work", subtitle: "Heads-down block", icon: Brain },
+  { name: "School", subtitle: "Study session", icon: GraduationCap },
+  { name: "Gym", subtitle: "Training block", icon: Dumbbell },
+  { name: "Content", subtitle: "Create & ship", icon: Video },
+  { name: "Business", subtitle: "Build & operate", icon: Briefcase },
+  { name: "Trading Research", subtitle: "Charts & analysis", icon: LineChart },
+  { name: "Prayer / Bible Study", subtitle: "Quiet time", icon: BookOpen },
+  { name: "Wind Down", subtitle: "Ease into rest", icon: Moon },
+] as const;
+const MIN_MINUTES = 5;
+const MAX_MINUTES = 240;
+const MINUTE_STEP = 5;
+
+function formatCountdown(totalMinutes: number) {
+  return `${String(totalMinutes).padStart(2, "0")}:00`;
+}
 
 interface FocusClientProps {
   activeSession: FocusSession | null;
@@ -29,9 +43,8 @@ export function FocusClient({ activeSession: initialSession, history, goals, wee
   const toast = useToast();
   const [session, setSession] = useState(initialSession);
   const [elapsed, setElapsed] = useState(initialSession?.actual_seconds ?? 0);
-  const [preset, setPreset] = useState<string>(PRESETS[0]);
+  const [preset, setPreset] = useState<string>(PRESETS_META[0].name);
   const [minutes, setMinutes] = useState<number>(25);
-  const [customMinutes, setCustomMinutes] = useState("");
   const [goalId, setGoalId] = useState<string>("");
   const [endSheetOpen, setEndSheetOpen] = useState(false);
   const [notes, setNotes] = useState("");
@@ -56,7 +69,7 @@ export function FocusClient({ activeSession: initialSession, history, goals, wee
   }, [session, elapsed]);
 
   async function startSession() {
-    const plannedMinutes = customMinutes ? Number(customMinutes) : minutes;
+    const plannedMinutes = minutes;
     if (!plannedMinutes || plannedMinutes <= 0) {
       toast("Enter a valid duration.", "error");
       return;
@@ -140,68 +153,92 @@ export function FocusClient({ activeSession: initialSession, history, goals, wee
           onEnd={openEndSheet}
         />
       ) : (
-        <div className="space-y-5 rounded-2xl border border-border bg-card p-5">
-          <div>
-            <p className="mb-2 text-sm font-medium text-text">Session type</p>
-            <div className="flex flex-wrap gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPreset(p)}
-                  className={`min-h-9 rounded-full border px-3.5 text-sm font-medium transition-colors ${
-                    preset === p ? "border-blue bg-blue/15 text-blue-light" : "border-border text-text-secondary hover:text-text"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm font-medium text-text">Duration</p>
-            <SegmentedControl
-              options={DURATIONS.map((d) => ({ value: String(d), label: `${d}m` }))}
-              value={String(minutes)}
-              onChange={(v) => {
-                setMinutes(Number(v));
-                setCustomMinutes("");
-              }}
-            />
-            <input
-              type="number"
-              min={1}
-              placeholder="Custom minutes"
-              value={customMinutes}
-              onChange={(e) => setCustomMinutes(e.target.value)}
-              className="mt-2 min-h-10 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
-            />
-          </div>
-
-          {goals.length > 0 && (
-            <div>
-              <p className="mb-2 text-sm font-medium text-text">Linked goal (optional)</p>
-              <select
-                value={goalId}
-                onChange={(e) => setGoalId(e.target.value)}
-                className="min-h-10 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
+        <div className="space-y-5">
+          <div className="rounded-3xl border border-border bg-card p-5">
+            <div className="flex items-center justify-center rounded-2xl border border-blue/20 bg-bg/60 py-8">
+              <p
+                className="font-mono text-6xl font-bold tabular-nums text-blue-light"
+                style={{ textShadow: "0 0 24px rgba(99, 199, 255, 0.45), 0 0 4px rgba(99, 199, 255, 0.6)" }}
               >
-                <option value="">None</option>
-                {goals.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.title}
-                  </option>
-                ))}
-              </select>
+                {formatCountdown(minutes)}
+              </p>
             </div>
-          )}
 
-          <button
-            onClick={startSession}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue text-[15px] font-semibold text-white transition-colors hover:bg-blue/90"
-          >
-            <Play className="h-4 w-4" strokeWidth={2} /> Start Focus
-          </button>
+            <div className="mx-auto mt-5 flex w-fit items-center gap-1 rounded-full border border-border-strong bg-card-secondary p-1">
+              <button
+                onClick={() => setMinutes((m) => Math.max(MIN_MINUTES, m - MINUTE_STEP))}
+                aria-label="Decrease duration"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-card hover:text-text"
+              >
+                <Minus className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+              <span className="w-20 text-center text-sm font-semibold text-text">{minutes}m</span>
+              <button
+                onClick={() => setMinutes((m) => Math.min(MAX_MINUTES, m + MINUTE_STEP))}
+                aria-label="Increase duration"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-card hover:text-text"
+              >
+                <Plus className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <button
+              onClick={startSession}
+              className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-blue text-[15px] font-semibold text-white transition-colors hover:bg-blue/90"
+            >
+              <Play className="h-4 w-4" strokeWidth={2} /> Start
+            </button>
+
+            {goals.length > 0 && (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-border-strong bg-card-secondary px-4 py-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <Target className="h-4 w-4 flex-shrink-0 text-text-secondary" strokeWidth={2} />
+                  <span className="text-sm text-text">Linked goal</span>
+                </div>
+                <select
+                  value={goalId}
+                  onChange={(e) => setGoalId(e.target.value)}
+                  className="min-w-0 max-w-[55%] rounded-full border-none bg-transparent text-right text-sm font-medium text-text-secondary outline-none"
+                >
+                  <option value="">None</option>
+                  {goals.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <p className="mb-3 text-sm font-medium text-text">Session type</p>
+            <div className="grid grid-cols-2 gap-3">
+              {PRESETS_META.map((p) => {
+                const Icon = p.icon;
+                const active = preset === p.name;
+                return (
+                  <button
+                    key={p.name}
+                    onClick={() => setPreset(p.name)}
+                    className={`rounded-2xl border p-4 text-left transition-colors ${
+                      active ? "border-blue/50 bg-blue/10" : "border-border bg-card hover:border-border-strong"
+                    }`}
+                  >
+                    <span
+                      className={`mb-3 flex h-9 w-9 items-center justify-center rounded-full ${
+                        active ? "bg-blue/20 text-blue-light" : "bg-card-secondary text-text-secondary"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" strokeWidth={2} />
+                    </span>
+                    <p className="text-sm font-semibold text-text">{p.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-text-secondary">{p.subtitle}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
