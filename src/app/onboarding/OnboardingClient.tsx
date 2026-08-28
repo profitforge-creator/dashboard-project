@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { ArrowRight, Zap, Heart, Moon, Flame, HeartPulse, Briefcase, Wallet, Sparkle, Bell, BellOff, Sun, Monitor } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import type { CoachingPersonality, GoalCategory } from "@/lib/supabase/types";
 
 type Answers = {
@@ -16,6 +18,33 @@ type Answers = {
 };
 
 const STEPS = ["name", "personality", "wake_phrase", "focus_areas", "notifications", "appearance", "review"] as const;
+
+const GROUPS: { label: string; steps: (typeof STEPS)[number][] }[] = [
+  { label: "About you", steps: ["name", "personality", "wake_phrase"] },
+  { label: "What you need", steps: ["focus_areas", "notifications"] },
+  { label: "How I show up", steps: ["appearance", "review"] },
+];
+
+const PERSONALITY_META: Record<CoachingPersonality, { label: string; icon: LucideIcon }> = {
+  direct: { label: "Direct", icon: Zap },
+  encouraging: { label: "Encouraging", icon: Heart },
+  calm: { label: "Calm", icon: Moon },
+  tough_love: { label: "Tough love", icon: Flame },
+};
+
+const FOCUS_META: Record<GoalCategory, { label: string; icon: LucideIcon }> = {
+  health: { label: "Health", icon: HeartPulse },
+  business: { label: "Business", icon: Briefcase },
+  financial: { label: "Financial", icon: Wallet },
+  spiritual: { label: "Spiritual", icon: Sparkle },
+  general: { label: "General", icon: Sparkle },
+};
+
+const APPEARANCE_META: Record<"dark" | "light" | "system", { label: string; icon: LucideIcon }> = {
+  dark: { label: "Dark", icon: Moon },
+  light: { label: "Light", icon: Sun },
+  system: { label: "System", icon: Monitor },
+};
 
 export function OnboardingClient({ userId, email }: { userId: string; email: string }) {
   const router = useRouter();
@@ -31,7 +60,9 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
   });
 
   const key = STEPS[step];
-  const progress = ((step + 1) / STEPS.length) * 100;
+  const groupIndex = GROUPS.findIndex((g) => g.steps.includes(key));
+  const stepsInGroup = GROUPS[groupIndex].steps;
+  const groupProgress = (stepsInGroup.indexOf(key) + 1) / stepsInGroup.length;
 
   function next() {
     if (step < STEPS.length - 1) setStep((s) => s + 1);
@@ -84,18 +115,18 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
   return (
     <main className="flex min-h-dvh flex-col bg-bg px-6 pb-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
-        <div className="mb-8 flex items-center gap-3">
-          <button
-            onClick={back}
-            disabled={step === 0}
-            aria-label="Back"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-opacity disabled:opacity-0"
-          >
-            <ChevronLeft className="h-5 w-5" strokeWidth={2} />
-          </button>
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-card">
-            <div className="h-full rounded-full bg-blue transition-all duration-300" style={{ width: `${progress}%` }} />
-          </div>
+        <div className="mb-10 flex items-center gap-2">
+          {GROUPS.map((g, i) => (
+            <div key={g.label} className="flex-1">
+              <p className={cn("label-mono mb-1.5 truncate", i === groupIndex ? "text-blue-light" : "text-text-secondary/50")}>{g.label}</p>
+              <div className="h-[3px] overflow-hidden rounded-full bg-card">
+                <div
+                  className="h-full rounded-full bg-blue transition-all duration-300"
+                  style={{ width: i < groupIndex ? "100%" : i === groupIndex ? `${groupProgress * 100}%` : "0%" }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
 
         <div key={key} className="flex-1 animate-fade-in">
@@ -116,13 +147,14 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
 
           {key === "personality" && (
             <QuestionStep title="How should Amari coach you?" subtitle="You can change this any time in Profile.">
-              <div className="grid grid-cols-2 gap-3">
-                {(["direct", "encouraging", "calm", "tough_love"] as CoachingPersonality[]).map((p) => (
-                  <OptionButton
+              <div className="flex flex-wrap gap-2.5">
+                {(Object.keys(PERSONALITY_META) as CoachingPersonality[]).map((p) => (
+                  <OptionPill
                     key={p}
                     selected={answers.coaching_personality === p}
                     onClick={() => setAnswers((a) => ({ ...a, coaching_personality: p }))}
-                    label={p === "tough_love" ? "Tough love" : p[0].toUpperCase() + p.slice(1)}
+                    label={PERSONALITY_META[p].label}
+                    icon={PERSONALITY_META[p].icon}
                   />
                 ))}
               </div>
@@ -145,9 +177,9 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
 
           {key === "focus_areas" && (
             <QuestionStep title="What matters most right now?" subtitle="Pick as many as apply — you can add goals for these later.">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-wrap gap-2.5">
                 {(["health", "business", "financial", "spiritual"] as GoalCategory[]).map((c) => (
-                  <OptionButton
+                  <OptionPill
                     key={c}
                     selected={answers.focus_areas.includes(c)}
                     onClick={() =>
@@ -156,7 +188,8 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
                         focus_areas: a.focus_areas.includes(c) ? a.focus_areas.filter((x) => x !== c) : [...a.focus_areas, c],
                       }))
                     }
-                    label={c[0].toUpperCase() + c.slice(1)}
+                    label={FOCUS_META[c].label}
+                    icon={FOCUS_META[c].icon}
                   />
                 ))}
               </div>
@@ -165,18 +198,18 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
 
           {key === "notifications" && (
             <QuestionStep title="Enable notifications?" subtitle="Reminders for focus sessions and upcoming deadlines.">
-              <div className="grid grid-cols-2 gap-3">
-                <OptionButton selected={answers.notifications_enabled === true} onClick={() => setAnswers((a) => ({ ...a, notifications_enabled: true }))} label="Yes, enable" />
-                <OptionButton selected={answers.notifications_enabled === false} onClick={() => setAnswers((a) => ({ ...a, notifications_enabled: false }))} label="Not now" />
+              <div className="flex flex-wrap gap-2.5">
+                <OptionPill selected={answers.notifications_enabled === true} onClick={() => setAnswers((a) => ({ ...a, notifications_enabled: true }))} label="Yes, enable" icon={Bell} />
+                <OptionPill selected={answers.notifications_enabled === false} onClick={() => setAnswers((a) => ({ ...a, notifications_enabled: false }))} label="Not now" icon={BellOff} />
               </div>
             </QuestionStep>
           )}
 
           {key === "appearance" && (
             <QuestionStep title="Pick an appearance" subtitle="You can change this any time in Profile.">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-wrap gap-2.5">
                 {(["dark", "light", "system"] as const).map((a) => (
-                  <OptionButton key={a} selected={answers.appearance === a} onClick={() => setAnswers((s) => ({ ...s, appearance: a }))} label={a[0].toUpperCase() + a.slice(1)} />
+                  <OptionPill key={a} selected={answers.appearance === a} onClick={() => setAnswers((s) => ({ ...s, appearance: a }))} label={APPEARANCE_META[a].label} icon={APPEARANCE_META[a].icon} />
                 ))}
               </div>
             </QuestionStep>
@@ -196,13 +229,22 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
           )}
         </div>
 
-        <button
-          onClick={key === "review" ? finish : next}
-          disabled={!canContinue || saving}
-          className="sticky bottom-6 mt-8 min-h-14 w-full rounded-2xl bg-blue text-[15px] font-semibold text-white transition-colors hover:bg-blue/90 disabled:opacity-40"
-        >
-          {key === "review" ? (saving ? "Saving…" : "Enter Amari") : "Continue"}
-        </button>
+        <div className="sticky bottom-6 mt-8 flex items-center justify-between gap-4">
+          <button
+            onClick={back}
+            className={cn("label-mono text-text-secondary transition-opacity hover:text-text", step === 0 && "pointer-events-none opacity-0")}
+          >
+            back
+          </button>
+          <button
+            onClick={key === "review" ? finish : next}
+            disabled={!canContinue || saving}
+            className="flex min-h-12 items-center gap-2 rounded-full bg-blue px-6 text-sm font-semibold text-bg transition-colors hover:bg-blue/90 disabled:opacity-40"
+          >
+            {key === "review" ? (saving ? "Saving…" : "Enter Amari") : "Continue"}
+            {key !== "review" && <ArrowRight className="h-4 w-4" strokeWidth={2.5} />}
+          </button>
+        </div>
       </div>
     </main>
   );
@@ -211,21 +253,25 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
 function QuestionStep({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <div>
-      <h1 className="text-[26px] font-semibold leading-tight text-text">{title}</h1>
-      <p className="mt-2 text-sm text-text-secondary">{subtitle}</p>
+      <h1 className="text-[28px] italic leading-tight text-text" style={{ fontFamily: "var(--font-serif)" }}>
+        {title}
+      </h1>
+      <p className="mt-2 text-sm italic text-blue-light">{subtitle}</p>
       <div className="mt-8">{children}</div>
     </div>
   );
 }
 
-function OptionButton({ selected, onClick, label }: { selected: boolean; onClick: () => void; label: string }) {
+function OptionPill({ selected, onClick, label, icon: Icon }: { selected: boolean; onClick: () => void; label: string; icon: LucideIcon }) {
   return (
     <button
       onClick={onClick}
-      className={`min-h-14 rounded-2xl border px-4 text-sm font-semibold transition-colors ${
+      className={cn(
+        "flex min-h-12 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors",
         selected ? "border-blue bg-blue/15 text-blue-light" : "border-border bg-card text-text hover:border-border-strong"
-      }`}
+      )}
     >
+      <Icon className="h-4 w-4" strokeWidth={2} />
       {label}
     </button>
   );
