@@ -295,6 +295,8 @@ export interface WorkoutExercise {
   name: string;
   sets: number | null;
   reps: string;
+  weight_lb: number | null;
+  rest_seconds: number | null;
   notes: string;
   sort_order: number;
   day_label: string;

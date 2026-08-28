@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Plus, X, ArrowUp, ArrowDown, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, Plus, X, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Lock } from "lucide-react";
 import type { WorkoutExercise } from "@/lib/supabase/types";
 import { EXERCISE_CATALOG, DAY_TAGS } from "@/lib/workoutCatalog";
 import { Sheet } from "@/components/Sheet";
@@ -87,7 +87,8 @@ export function ExercisePickerSheet({ open, onClose, day, picks, onAdd, onRemove
       ) : (
         <div className="mb-4 space-y-1.5">
           {picks.map((p, i) => (
-            <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5">
+            <div key={p.id} className="flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5">
+              <Lock className="h-3.5 w-3.5 flex-shrink-0 text-text-secondary/50" strokeWidth={2} />
               <span className="min-w-0 flex-1 truncate text-sm text-text">{p.name}</span>
               <div className="flex flex-shrink-0 items-center gap-0.5">
                 <button

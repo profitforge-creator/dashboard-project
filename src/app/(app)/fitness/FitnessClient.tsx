@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Sparkles, Target, Dumbbell, Check, Trash2, Image as ImageIcon, RefreshCw, Pencil, Sparkle } from "lucide-react";
+import { Camera, Sparkles, Target, Dumbbell, Check, Trash2, Image as ImageIcon, RefreshCw, Pencil, Sparkle, GripVertical, Eye, Lock, SlidersHorizontal } from "lucide-react";
 import type { FitnessProfile, FitnessProgressPhoto, FitnessAnalysis, WorkoutRoutine, WorkoutExercise, WorkoutCompletion, SplitRotationDay } from "@/lib/supabase/types";
 import { AreaChart } from "@/components/AreaChart";
 import { EmptyState } from "@/components/EmptyState";
@@ -11,6 +11,7 @@ import { Button } from "@/components/Button";
 import { SplitRotationSheet } from "@/components/SplitRotationSheet";
 import { SplitPickerCard } from "@/components/SplitPickerCard";
 import { ExercisePickerSheet } from "@/components/ExercisePickerSheet";
+import { TuneSheet } from "@/components/TuneSheet";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmationDialog";
@@ -71,6 +72,8 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
   const [previewSplitId, setPreviewSplitId] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState<string>("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [tuneExerciseId, setTuneExerciseId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   const splitDef = routine?.split_id ? WORKOUT_SPLITS.find((s) => s.id === routine.split_id) : undefined;
   const days = splitDef ? [...new Set(splitDef.pattern)] : exercises.length ? [...new Set(exercises.map((e) => e.day_label || "Full Body"))] : ["Full Body"];
@@ -261,6 +264,39 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
       supabase.from("workout_exercises").update({ sort_order: b.sort_order }).eq("id", a.id),
       supabase.from("workout_exercises").update({ sort_order: a.sort_order }).eq("id", b.id),
     ]);
+    router.refresh();
+  }
+
+  async function reorderDay(orderedIds: string[]) {
+    const supabase = createClient();
+    await Promise.all(orderedIds.map((id, i) => supabase.from("workout_exercises").update({ sort_order: i }).eq("id", id)));
+    router.refresh();
+  }
+
+  function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) {
+      setDragId(null);
+      return;
+    }
+    const ids = dayExercises.map((e) => e.id);
+    const from = ids.indexOf(dragId);
+    const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) {
+      setDragId(null);
+      return;
+    }
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    setDragId(null);
+    reorderDay(ids);
+  }
+
+  async function updateExercise(id: string, updates: { weight_lb: number | null; sets: number | null; reps: string; rest_seconds: number | null }) {
+    const supabase = createClient();
+    const { error } = await supabase.from("workout_exercises").update(updates).eq("id", id);
+    if (error) {
+      toast("Couldn't save that change.", "error");
+      return;
+    }
     router.refresh();
   }
 
@@ -471,35 +507,52 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
               </div>
             )}
 
+            <p className="italic text-text" style={{ fontFamily: "var(--font-serif)", fontSize: "1.25rem" }}>
+              {currentDay}
+            </p>
+
             {dayExercises.length === 0 ? (
               <EmptyState icon={Dumbbell} title={`No exercises for ${currentDay} yet`} description="Add one to start checking off sets." />
             ) : (
-              <div className="space-y-2">
-                {dayExercises.map((ex) => {
+              <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                {dayExercises.map((ex, i) => {
                   const done = completedIds.has(ex.id);
+                  const tuned = ex.weight_lb != null || ex.rest_seconds != null;
+                  const meta = [ex.sets && `${ex.sets} sets`, ex.reps && `${ex.reps} reps`, ex.weight_lb != null && `${ex.weight_lb} lb`].filter(Boolean).join(" · ");
                   return (
-                    <div key={ex.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3.5">
-                      <button onClick={() => toggleExercise(ex.id, done)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                    <div
+                      key={ex.id}
+                      draggable
+                      onDragStart={() => setDragId(ex.id)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleDrop(ex.id)}
+                      className={`flex items-center gap-2 border-border px-3 py-3 transition-opacity ${i > 0 ? "border-t" : ""} ${dragId === ex.id ? "opacity-40" : ""}`}
+                    >
+                      <span className="flex-shrink-0 cursor-grab text-text-secondary/50 active:cursor-grabbing" aria-hidden="true">
+                        <GripVertical className="h-4 w-4" strokeWidth={2} />
+                      </span>
+                      <button onClick={() => toggleExercise(ex.id, done)} aria-label={done ? `Mark ${ex.name} not done` : `Mark ${ex.name} done`} className="flex-shrink-0">
                         <span
-                          className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                          className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
                             done ? "border-success bg-success text-bg" : "border-border-strong text-transparent"
                           }`}
                         >
                           <Check className="h-3.5 w-3.5" strokeWidth={3} />
                         </span>
-                        <span className="min-w-0">
-                          <p className={`truncate text-sm font-medium ${done ? "text-text-secondary line-through" : "text-text"}`}>{ex.name}</p>
-                          {(ex.sets || ex.reps) && (
-                            <p className="truncate text-xs text-text-secondary">
-                              {ex.sets ? `${ex.sets} sets` : ""}
-                              {ex.sets && ex.reps && " · "}
-                              {ex.reps}
-                            </p>
-                          )}
-                        </span>
+                      </button>
+                      {tuned ? <Eye className="h-3.5 w-3.5 flex-shrink-0 text-blue-light" strokeWidth={2} /> : <Lock className="h-3.5 w-3.5 flex-shrink-0 text-text-secondary/50" strokeWidth={2} />}
+                      <div className="min-w-0 flex-1">
+                        <p className={`truncate text-sm font-medium ${done ? "text-text-secondary line-through" : "text-text"}`}>{ex.name}</p>
+                        {meta && <p className="truncate text-xs text-text-secondary">{meta}</p>}
+                      </div>
+                      <button
+                        onClick={() => setTuneExerciseId(ex.id)}
+                        className="label-mono flex flex-shrink-0 items-center gap-1 rounded-full border border-border-strong px-2.5 py-1.5 text-blue-light transition-colors hover:bg-card-secondary"
+                      >
+                        <SlidersHorizontal className="h-3 w-3" strokeWidth={2} /> Tune
                       </button>
                       <button onClick={() => deleteExercise(ex.id)} aria-label={`Remove ${ex.name}`} className="flex-shrink-0 text-text-secondary transition-colors hover:text-error">
-                        <Trash2 className="h-4 w-4" strokeWidth={2} />
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                       </button>
                     </div>
                   );
@@ -633,6 +686,14 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
         onAdd={(name) => addCatalogExercise(currentDay, name)}
         onRemove={deleteExercise}
         onReorder={reorderExercise}
+      />
+
+      <TuneSheet
+        open={!!tuneExerciseId}
+        onClose={() => setTuneExerciseId(null)}
+        exercise={exercises.find((e) => e.id === tuneExerciseId) ?? null}
+        dayLabel={currentDay}
+        onSave={updateExercise}
       />
 
       <SplitRotationSheet
