@@ -34,12 +34,12 @@ export function AmariLifeCircle({ score, size = 240 }: AmariLifeCircleProps) {
       <div
         className="absolute inset-6 rounded-full border border-white/10 motion-safe:animate-[spin_40s_linear_infinite]"
         style={{
-          background: "conic-gradient(from 0deg, rgba(99,199,255,0.25), transparent 30%, rgba(47,107,255,0.35) 60%, transparent 90%)",
+          background: "conic-gradient(from 0deg, rgba(127,245,196,0.25), transparent 30%, rgba(52,227,161,0.35) 60%, transparent 90%)",
         }}
         aria-hidden="true"
       />
       <div
-        className="relative flex h-[68%] w-[68%] flex-col items-center justify-center rounded-full border border-white/10 bg-bg-raised/80 text-center shadow-[0_0_60px_-10px_rgba(47,107,255,0.5)] backdrop-blur-sm"
+        className="relative flex h-[68%] w-[68%] flex-col items-center justify-center rounded-full border border-white/10 bg-bg-raised/80 text-center shadow-[0_0_60px_-10px_rgba(52,227,161,0.5)] backdrop-blur-sm"
       >
         <span className="text-5xl font-semibold tabular-nums text-text">{Math.round(clamped)}</span>
         <span className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-text-secondary">Life Score</span>

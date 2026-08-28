@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Diamond } from "lucide-react";
 import { NAV_ITEMS } from "@/components/nav-items";
+import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/utils";
 
 export function DesktopSidebar() {
@@ -20,7 +20,7 @@ export function DesktopSidebar() {
           className="mb-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-blue/15 text-blue-light transition-colors hover:bg-blue/25"
           aria-label="Amari home"
         >
-          <Diamond className="h-[18px] w-[18px]" strokeWidth={2} fill="currentColor" aria-hidden="true" />
+          <BrandMark size={18} />
         </Link>
         <div className="my-0.5 h-px w-6 flex-shrink-0 bg-border" />
         {NAV_ITEMS.map((item) => {

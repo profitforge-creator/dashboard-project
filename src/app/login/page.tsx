@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { BrandMark } from "@/components/BrandMark";
 
 type Mode = "signin" | "signup";
 
@@ -58,8 +59,8 @@ export default function LoginPage() {
     <main className="flex min-h-dvh items-center justify-center bg-bg px-6">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="mb-10 flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card shadow-[0_0_40px_-10px_rgba(47,107,255,0.5)]">
-            <span className="h-5 w-5 rounded-full bg-blue shadow-[0_0_16px_rgba(47,107,255,0.8)]" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card text-blue shadow-[0_0_40px_-10px_rgba(52,227,161,0.5)]">
+            <BrandMark size={26} />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-text">Amari</h1>
           <p className="text-center text-sm text-text-secondary">Your personal life dashboard.</p>

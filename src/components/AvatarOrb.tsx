@@ -17,7 +17,7 @@ const SPEED: Record<OrbState, { rotate: number; rotateRev: number; breathe: numb
 };
 
 /** An abstract, animated "living" orb — layered blurred gradient blobs, no external assets. */
-export function AvatarOrb({ state = "idle", size = 96, colorA = "#2f6bff", colorB = "#63c7ff", colorC = "#0b2b5a" }: AvatarOrbProps) {
+export function AvatarOrb({ state = "idle", size = 96, colorA = "#34e3a1", colorB = "#7ff5c4", colorC = "#0a3324" }: AvatarOrbProps) {
   const speed = SPEED[state];
 
   return (
