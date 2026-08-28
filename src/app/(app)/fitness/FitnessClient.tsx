@@ -2,17 +2,20 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Sparkles, Target, Dumbbell, Plus, Check, Trash2, Image as ImageIcon, RefreshCw, Pencil } from "lucide-react";
+import { Camera, Sparkles, Target, Dumbbell, Check, Trash2, Image as ImageIcon, RefreshCw, Pencil, Sparkle } from "lucide-react";
 import type { FitnessProfile, FitnessProgressPhoto, FitnessAnalysis, WorkoutRoutine, WorkoutExercise, WorkoutCompletion, SplitRotationDay } from "@/lib/supabase/types";
 import { AreaChart } from "@/components/AreaChart";
 import { EmptyState } from "@/components/EmptyState";
 import { Sheet } from "@/components/Sheet";
 import { Button } from "@/components/Button";
 import { SplitRotationSheet } from "@/components/SplitRotationSheet";
+import { SplitPickerCard } from "@/components/SplitPickerCard";
+import { ExercisePickerSheet } from "@/components/ExercisePickerSheet";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmationDialog";
 import { computeRotationTodayIndex } from "@/lib/rotation";
+import { WORKOUT_SPLITS, type WorkoutSplit } from "@/lib/workoutCatalog";
 
 interface FitnessClientProps {
   profile: FitnessProfile | null;
@@ -65,10 +68,14 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
   const [analyzing, setAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [routineSheetOpen, setRoutineSheetOpen] = useState(false);
-  const [routineName, setRoutineName] = useState("");
-  const [exerciseSheetOpen, setExerciseSheetOpen] = useState(false);
-  const [exerciseForm, setExerciseForm] = useState({ name: "", sets: "", reps: "", notes: "" });
+  const [previewSplitId, setPreviewSplitId] = useState<string | null>(null);
+  const [activeDay, setActiveDay] = useState<string>("");
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const splitDef = routine?.split_id ? WORKOUT_SPLITS.find((s) => s.id === routine.split_id) : undefined;
+  const days = splitDef ? [...new Set(splitDef.pattern)] : exercises.length ? [...new Set(exercises.map((e) => e.day_label || "Full Body"))] : ["Full Body"];
+  const currentDay = days.includes(activeDay) ? activeDay : days[0];
+  const dayExercises = exercises.filter((e) => (e.day_label || "Full Body") === currentDay).sort((a, b) => a.sort_order - b.sort_order);
 
   const weightData = useMemo(
     () => photos.filter((p) => p.weight_kg != null).map((p) => ({ label: dateLabel(p.taken_on), value: p.weight_kg as number })),
@@ -188,47 +195,72 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
     router.refresh();
   }
 
-  async function createRoutine(e: React.FormEvent) {
-    e.preventDefault();
-    if (!routineName.trim()) return;
+  async function activateSplit(split: WorkoutSplit) {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
-    const { error } = await supabase.from("workout_routines").insert({ user_id: user.id, name: routineName.trim(), active: true });
-    if (error) {
-      toast("Couldn't create routine.", "error");
-      return;
+
+    if (routine) {
+      await supabase.from("workout_exercises").delete().eq("routine_id", routine.id);
+      const { error } = await supabase.from("workout_routines").update({ name: split.name, split_id: split.id, active: true }).eq("id", routine.id);
+      if (error) return toast("Couldn't switch splits.", "error");
+    } else {
+      const { error } = await supabase.from("workout_routines").insert({ user_id: user.id, name: split.name, split_id: split.id, active: true });
+      if (error) return toast("Couldn't start that split.", "error");
     }
-    setRoutineName("");
-    setRoutineSheetOpen(false);
+    toast(`Using ${split.name} — pick exercises for each day.`, "success");
+    setPreviewSplitId(null);
+    setActiveDay(split.pattern[0]);
     router.refresh();
   }
 
-  async function addExercise(e: React.FormEvent) {
-    e.preventDefault();
-    if (!exerciseForm.name.trim() || !routine) return;
+  async function startCustomRoutine() {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
+    const { error } = await supabase.from("workout_routines").insert({ user_id: user.id, name: "Custom routine", split_id: null, active: true });
+    if (error) return toast("Couldn't create routine.", "error");
+    toast("Routine created — add exercises below.", "success");
+    router.refresh();
+  }
+
+  async function addCatalogExercise(day: string, name: string) {
+    if (!routine) return;
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const dayCount = exercises.filter((e) => (e.day_label || "Full Body") === day).length;
     const { error } = await supabase.from("workout_exercises").insert({
       user_id: user.id,
       routine_id: routine.id,
-      name: exerciseForm.name.trim(),
-      sets: exerciseForm.sets ? Number(exerciseForm.sets) : null,
-      reps: exerciseForm.reps.trim(),
-      notes: exerciseForm.notes.trim(),
-      sort_order: exercises.length,
+      name,
+      day_label: day,
+      sort_order: dayCount,
     });
     if (error) {
       toast("Couldn't add exercise.", "error");
       return;
     }
-    setExerciseForm({ name: "", sets: "", reps: "", notes: "" });
-    setExerciseSheetOpen(false);
+    router.refresh();
+  }
+
+  async function reorderExercise(id: string, direction: "up" | "down") {
+    const idx = dayExercises.findIndex((e) => e.id === id);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= dayExercises.length) return;
+    const a = dayExercises[idx];
+    const b = dayExercises[swapIdx];
+    const supabase = createClient();
+    await Promise.all([
+      supabase.from("workout_exercises").update({ sort_order: b.sort_order }).eq("id", a.id),
+      supabase.from("workout_exercises").update({ sort_order: a.sort_order }).eq("id", b.id),
+    ]);
     router.refresh();
   }
 
@@ -366,57 +398,121 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
-            <Dumbbell className="h-4 w-4 text-blue-light" strokeWidth={2} /> Workout routine
-          </h2>
-          {routine && (
-            <button onClick={() => setExerciseSheetOpen(true)} className="flex items-center gap-1 text-xs font-semibold text-blue-light">
-              <Plus className="h-3.5 w-3.5" /> Add exercise
-            </button>
-          )}
-        </div>
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text">
+          <Dumbbell className="h-4 w-4 text-blue-light" strokeWidth={2} /> Workout routine
+        </h2>
 
         {!routine ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-5 text-center">
-            <p className="mb-3 text-sm text-text-secondary">No active routine yet.</p>
-            <Button onClick={() => setRoutineSheetOpen(true)} variant="pill" className="mx-auto min-h-10 px-4">
-              Create routine
-            </Button>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {WORKOUT_SPLITS.map((split) => (
+                <SplitPickerCard key={split.id} split={split} active={previewSplitId === split.id} onClick={() => setPreviewSplitId(previewSplitId === split.id ? null : split.id)} />
+              ))}
+            </div>
+
+            {previewSplitId &&
+              (() => {
+                const split = WORKOUT_SPLITS.find((s) => s.id === previewSplitId)!;
+                return (
+                  <div className="glow-border rounded-3xl border border-blue/30 bg-card p-5">
+                    {split.recommended && (
+                      <span className="label-mono mb-2 inline-block rounded-full border border-warning/40 px-2 py-0.5 text-warning">Matched for you</span>
+                    )}
+                    <p className="text-2xl italic text-text" style={{ fontFamily: "var(--font-serif)" }}>
+                      {split.name}
+                    </p>
+                    <p className="text-sm text-text-secondary">
+                      {split.daysPerWeek} {split.cycles ? "per cycle" : "per week"}
+                    </p>
+                    <p className="label-mono mt-4 text-blue-light">The call</p>
+                    <p className="text-lg italic text-text" style={{ fontFamily: "var(--font-serif)" }}>
+                      {split.call}
+                    </p>
+                    <p className="mt-1 text-sm text-text-secondary">{split.callBody}</p>
+                    <p className="label-mono mt-4 text-blue-light">For you</p>
+                    <p className="mt-1 border-l-2 border-blue/40 pl-3 text-sm italic text-text">{split.forYou}</p>
+                    <Button onClick={() => activateSplit(split)} block className="mt-5">
+                      Use this split →
+                    </Button>
+                  </div>
+                );
+              })()}
+
+            <button onClick={startCustomRoutine} className="text-xs font-medium text-text-secondary hover:text-text">
+              or start from scratch with a custom routine
+            </button>
           </div>
-        ) : exercises.length === 0 ? (
-          <EmptyState icon={Dumbbell} title={`"${routine.name}" has no exercises yet`} description="Add one to start checking off sets." />
         ) : (
-          <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">{routine.name}</p>
-            {exercises.map((ex) => {
-              const done = completedIds.has(ex.id);
-              return (
-                <div key={ex.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3.5">
-                  <button onClick={() => toggleExercise(ex.id, done)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                    <span
-                      className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                        done ? "border-success bg-success text-bg" : "border-border-strong text-transparent"
-                      }`}
-                    >
-                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                    </span>
-                    <span className="min-w-0">
-                      <p className={`truncate text-sm font-medium ${done ? "text-text-secondary line-through" : "text-text"}`}>{ex.name}</p>
-                      <p className="truncate text-xs text-text-secondary">
-                        {ex.sets ? `${ex.sets} sets` : ""}
-                        {ex.sets && ex.reps && " · "}
-                        {ex.reps}
-                        {ex.notes && ` · ${ex.notes}`}
-                      </p>
-                    </span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-1.5">
+                {days.map((day) => (
+                  <button
+                    key={day}
+                    onClick={() => setActiveDay(day)}
+                    className={`min-h-9 rounded-full border px-3.5 text-sm font-medium transition-colors ${
+                      day === currentDay ? "border-blue bg-blue/15 text-blue-light" : "border-border text-text-secondary hover:text-text"
+                    }`}
+                  >
+                    {day}
                   </button>
-                  <button onClick={() => deleteExercise(ex.id)} aria-label={`Remove ${ex.name}`} className="flex-shrink-0 text-text-secondary transition-colors hover:text-error">
-                    <Trash2 className="h-4 w-4" strokeWidth={2} />
-                  </button>
-                </div>
-              );
-            })}
+                ))}
+              </div>
+              <button onClick={() => setPreviewSplitId(previewSplitId ? null : "__switch")} className="flex-shrink-0 text-xs font-semibold text-blue-light">
+                Switch split
+              </button>
+            </div>
+
+            {previewSplitId === "__switch" && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {WORKOUT_SPLITS.map((split) => (
+                  <SplitPickerCard key={split.id} split={split} active={false} onClick={() => activateSplit(split)} />
+                ))}
+              </div>
+            )}
+
+            {dayExercises.length === 0 ? (
+              <EmptyState icon={Dumbbell} title={`No exercises for ${currentDay} yet`} description="Add one to start checking off sets." />
+            ) : (
+              <div className="space-y-2">
+                {dayExercises.map((ex) => {
+                  const done = completedIds.has(ex.id);
+                  return (
+                    <div key={ex.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3.5">
+                      <button onClick={() => toggleExercise(ex.id, done)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                        <span
+                          className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                            done ? "border-success bg-success text-bg" : "border-border-strong text-transparent"
+                          }`}
+                        >
+                          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                        </span>
+                        <span className="min-w-0">
+                          <p className={`truncate text-sm font-medium ${done ? "text-text-secondary line-through" : "text-text"}`}>{ex.name}</p>
+                          {(ex.sets || ex.reps) && (
+                            <p className="truncate text-xs text-text-secondary">
+                              {ex.sets ? `${ex.sets} sets` : ""}
+                              {ex.sets && ex.reps && " · "}
+                              {ex.reps}
+                            </p>
+                          )}
+                        </span>
+                      </button>
+                      <button onClick={() => deleteExercise(ex.id)} aria-label={`Remove ${ex.name}`} className="flex-shrink-0 text-text-secondary transition-colors hover:text-error">
+                        <Trash2 className="h-4 w-4" strokeWidth={2} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border text-sm font-medium text-text-secondary hover:border-border-strong hover:text-text"
+            >
+              <Sparkle className="h-3.5 w-3.5" strokeWidth={2} /> Add exercise to {currentDay}
+            </button>
           </div>
         )}
       </section>
@@ -529,73 +625,15 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
         </form>
       </Sheet>
 
-      <Sheet open={routineSheetOpen} onClose={() => setRoutineSheetOpen(false)} title="New routine">
-        <form onSubmit={createRoutine} className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Routine name</label>
-            <input
-              type="text"
-              value={routineName}
-              onChange={(e) => setRoutineName(e.target.value)}
-              placeholder="e.g. Push/Pull/Legs"
-              className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
-              required
-            />
-          </div>
-          <Button type="submit" block>
-            Create
-          </Button>
-        </form>
-      </Sheet>
-
-      <Sheet open={exerciseSheetOpen} onClose={() => setExerciseSheetOpen(false)} title="Add exercise">
-        <form onSubmit={addExercise} className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Name</label>
-            <input
-              type="text"
-              value={exerciseForm.name}
-              onChange={(e) => setExerciseForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="e.g. Incline dumbbell press"
-              className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">Sets</label>
-              <input
-                type="number"
-                value={exerciseForm.sets}
-                onChange={(e) => setExerciseForm((f) => ({ ...f, sets: e.target.value }))}
-                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">Reps</label>
-              <input
-                type="text"
-                value={exerciseForm.reps}
-                onChange={(e) => setExerciseForm((f) => ({ ...f, reps: e.target.value }))}
-                placeholder="e.g. 8-10"
-                className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Notes</label>
-            <input
-              type="text"
-              value={exerciseForm.notes}
-              onChange={(e) => setExerciseForm((f) => ({ ...f, notes: e.target.value }))}
-              className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
-            />
-          </div>
-          <Button type="submit" block>
-            Add exercise
-          </Button>
-        </form>
-      </Sheet>
+      <ExercisePickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        day={currentDay}
+        picks={dayExercises}
+        onAdd={(name) => addCatalogExercise(currentDay, name)}
+        onRemove={deleteExercise}
+        onReorder={reorderExercise}
+      />
 
       <SplitRotationSheet
         open={rotationSheetOpen}

@@ -284,6 +284,7 @@ export interface WorkoutRoutine {
   user_id: string;
   name: string;
   active: boolean;
+  split_id: string | null;
   created_at: string;
 }
 
@@ -296,6 +297,7 @@ export interface WorkoutExercise {
   reps: string;
   notes: string;
   sort_order: number;
+  day_label: string;
   created_at: string;
 }
 
