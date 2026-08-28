@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Play, Flame, Timer, CheckCircle2, ListChecks, Dumbbell, HeartPulse, Pill, Target, Megaphone, Wallet } from "lucide-react";
+import { MessageCircle, Play, Flame, Timer, CheckCircle2, ListChecks, Dumbbell, HeartPulse, Pill, Target, Megaphone, Wallet, Settings } from "lucide-react";
 import type { Profile, Goal, Task, FocusSession, Habit, HabitLog, HealthLog } from "@/lib/supabase/types";
 import { AmariLifeCircle } from "@/components/AmariLifeCircle";
 import { MetricCard } from "@/components/MetricCard";
@@ -17,6 +17,7 @@ import { ChatSheet } from "@/components/ChatSheet";
 import { QuickAdd } from "@/components/QuickAdd";
 import { NextTaskSquare } from "@/components/NextTaskSquare";
 import { ModuleCard } from "@/components/ModuleCard";
+import { BrandMark } from "@/components/BrandMark";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 
@@ -148,7 +149,7 @@ export function HomeClient({
   }
 
   const displayName = profile.full_name || profile.email?.split("@")[0] || "there";
-  const dateLabel = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const dateLabel = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }).toUpperCase();
 
   const categorySummaries = CATEGORIES.map((c) => {
     const inCategory = goals.filter((g) => g.category === c.key);
@@ -158,20 +159,25 @@ export function HomeClient({
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-2xl font-semibold text-text">
-            {greeting()}, {displayName}
-          </p>
-          <p className="text-sm text-text-secondary">{dateLabel}</p>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl bg-blue/15 text-blue-light">
+            <BrandMark size={18} />
+          </span>
+          <div>
+            <p className="italic text-text" style={{ fontFamily: "var(--font-serif)", fontSize: "1.75rem", lineHeight: 1.1 }}>
+              {greeting()}, {displayName}
+            </p>
+            <p className="label-mono mt-1 text-text-secondary">{dateLabel}</p>
+          </div>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <QuickAdd />
           <Link
             href="/profile"
             aria-label="Profile"
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-border bg-card text-sm font-semibold text-text"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-border bg-card text-text-secondary transition-colors hover:text-text"
           >
-            {displayName.slice(0, 1).toUpperCase()}
+            <Settings className="h-4 w-4" strokeWidth={2} />
           </Link>
         </div>
       </div>
@@ -188,55 +194,71 @@ export function HomeClient({
 
       <TimelineChart blocks={timelineBlocks} />
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-text">Modules</h2>
+      <section className="space-y-3">
+        <ModuleCard
+          href="/fitness"
+          icon={Dumbbell}
+          index="01"
+          label="Train"
+          stat={hasRoutine ? `${exercisesCompletedToday}/${exerciseCount} done today` : "—"}
+          sub="Workouts, splits, sessions"
+          visual="sparkline"
+          accent={hasRoutine && exerciseCount > 0 && exercisesCompletedToday === exerciseCount ? "blue" : "muted"}
+          hero
+        />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <ModuleCard
-            href="/fitness"
-            icon={Dumbbell}
-            label="Train"
-            stat={hasRoutine ? `${exercisesCompletedToday}/${exerciseCount}` : "—"}
-            sub={hasRoutine ? "done today" : "No routine yet"}
-            accent={hasRoutine && exerciseCount > 0 && exercisesCompletedToday === exerciseCount ? "blue" : "muted"}
+            href="/health"
+            icon={Pill}
+            index="02"
+            label="Fuel"
+            stat={activeSupplementCount ? `${supplementsTakenToday}/${activeSupplementCount} taken` : "—"}
+            sub="Macros, water, supplements"
+            visual="particles"
+            accent={activeSupplementCount > 0 && supplementsTakenToday === activeSupplementCount ? "blue" : "muted"}
           />
           <ModuleCard
             href="/health"
             icon={HeartPulse}
+            index="03"
             label="Vitals"
-            stat={healthToday?.steps != null ? healthToday.steps.toLocaleString() : "—"}
-            sub={healthToday?.sleep_hours != null ? `${healthToday.sleep_hours}h sleep` : "Not logged today"}
+            stat={healthToday?.steps != null ? `${healthToday.steps.toLocaleString()} steps` : "—"}
+            sub="Recovery, sleep, steps"
+            visual="radar"
             accent={healthToday ? "blue" : "muted"}
-          />
-          <ModuleCard
-            href="/health"
-            icon={Pill}
-            label="Fuel"
-            stat={activeSupplementCount ? `${supplementsTakenToday}/${activeSupplementCount}` : "—"}
-            sub={activeSupplementCount ? "supplements taken" : "None tracked"}
-            accent={activeSupplementCount > 0 && supplementsTakenToday === activeSupplementCount ? "blue" : "muted"}
           />
           <ModuleCard
             href="/focus"
             icon={Target}
+            index="04"
             label="Peak"
-            stat={`${Math.round(focusSecondsToday / 60)}m`}
-            sub={activeSession ? "Session running" : "Focused today"}
+            stat={`${Math.round(focusSecondsToday / 60)}m today`}
+            sub="Daily readiness"
+            visual="dotmatrix"
             accent={activeSession ? "warning" : focusSecondsToday > 0 ? "blue" : "muted"}
           />
           <ModuleCard
             href="/business"
             icon={Megaphone}
+            index="05"
             label="Brand"
-            stat={totalFollowers ? totalFollowers.toLocaleString() : "—"}
-            sub="total followers"
+            stat={totalFollowers ? `${totalFollowers.toLocaleString()} followers` : "—"}
+            sub="Content, reach, growth"
+            visual="emblem"
             accent={totalFollowers > 0 ? "violet" : "muted"}
           />
           <ModuleCard
             href="/finance"
             icon={Wallet}
+            index="06"
             label="Finance"
-            stat={financeRunwayDays === null ? "—" : `${financeRunwayDays}d`}
-            sub={`${financeLiquidCash.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })} liquid`}
+            stat={
+              financeRunwayDays === null
+                ? "—"
+                : `${financeRunwayDays}d runway · ${financeLiquidCash.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`
+            }
+            sub="Net worth, subscriptions"
+            visual="bars"
             accent={financeRunwayDays !== null && financeRunwayDays < 14 ? "error" : financeRunwayDays !== null && financeRunwayDays < 30 ? "warning" : "blue"}
           />
         </div>
