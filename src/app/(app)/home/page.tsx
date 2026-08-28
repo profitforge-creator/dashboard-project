@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/utils";
 import { computeBurnRates } from "@/lib/finance";
 import { HomeClient } from "./HomeClient";
-import type { Goal, Task, FocusSession, Habit, HabitLog, Transaction } from "@/lib/supabase/types";
+import type { Goal, Task, FocusSession, Habit, HabitLog, Transaction, HealthLog, WorkoutRoutine, WorkoutExercise, WorkoutCompletion, SocialAccount, SocialMetricsLog } from "@/lib/supabase/types";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -11,7 +11,21 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   const today = todayISO();
 
-  const [profileRes, goalsRes, tasksRes, sessionsRes, activeSessionRes, habitsRes, habitLogsRes, transactionsRes] = await Promise.all([
+  const [
+    profileRes,
+    goalsRes,
+    tasksRes,
+    sessionsRes,
+    activeSessionRes,
+    habitsRes,
+    habitLogsRes,
+    transactionsRes,
+    healthTodayRes,
+    supplementsRes,
+    supplementLogsTodayRes,
+    routineRes,
+    socialAccountsRes,
+  ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user!.id).single(),
     supabase.from("goals").select("*").eq("user_id", user!.id).eq("status", "active").order("deadline", { ascending: true, nullsFirst: false }),
     supabase.from("tasks").select("*").eq("user_id", user!.id).eq("task_date", today).order("sort_order", { ascending: true }).order("task_time", { ascending: true, nullsFirst: false }),
@@ -20,9 +34,45 @@ export default async function HomePage() {
     supabase.from("habits").select("*").eq("user_id", user!.id).order("created_at", { ascending: true }),
     supabase.from("habit_logs").select("*").eq("user_id", user!.id).eq("log_date", today),
     supabase.from("transactions").select("*").eq("user_id", user!.id).order("occurred_at", { ascending: false }).limit(500),
+    supabase.from("health_logs").select("*").eq("user_id", user!.id).eq("log_date", today).maybeSingle(),
+    supabase.from("supplements").select("*").eq("user_id", user!.id).eq("active", true),
+    supabase.from("supplement_logs").select("*").eq("user_id", user!.id).eq("log_date", today).eq("taken", true),
+    supabase.from("workout_routines").select("*").eq("user_id", user!.id).eq("active", true).maybeSingle(),
+    supabase.from("social_accounts").select("*").eq("user_id", user!.id),
   ]);
 
   const financeRates = computeBurnRates((transactionsRes.data ?? []) as Transaction[], 30);
+
+  const routine = routineRes.data as WorkoutRoutine | null;
+  const socialAccounts = (socialAccountsRes.data ?? []) as SocialAccount[];
+
+  const [exercisesRes, completionsTodayRes, socialMetricsRes] = await Promise.all([
+    routine
+      ? supabase.from("workout_exercises").select("*").eq("routine_id", routine.id)
+      : Promise.resolve({ data: [] as WorkoutExercise[] }),
+    supabase.from("workout_completions").select("*").eq("user_id", user!.id).eq("log_date", today).eq("completed", true),
+    socialAccounts.length
+      ? supabase
+          .from("social_metrics_logs")
+          .select("*")
+          .in(
+            "account_id",
+            socialAccounts.map((a) => a.id)
+          )
+          .order("log_date", { ascending: false })
+      : Promise.resolve({ data: [] as SocialMetricsLog[] }),
+  ]);
+
+  const exercises = (exercisesRes.data ?? []) as WorkoutExercise[];
+  const completionsToday = (completionsTodayRes.data ?? []) as WorkoutCompletion[];
+
+  const latestFollowersByAccount = new Map<string, number>();
+  for (const log of (socialMetricsRes.data ?? []) as SocialMetricsLog[]) {
+    if (!latestFollowersByAccount.has(log.account_id) && log.followers !== null) {
+      latestFollowersByAccount.set(log.account_id, log.followers);
+    }
+  }
+  const totalFollowers = [...latestFollowersByAccount.values()].reduce((a, b) => a + b, 0);
 
   const goals = (goalsRes.data ?? []) as Goal[];
   const tasks = (tasksRes.data ?? []) as Task[];
@@ -91,6 +141,13 @@ export default async function HomePage() {
       today={today}
       financeRunwayDays={financeRates.actualRunwayDays ?? financeRates.baselineRunwayDays}
       financeLiquidCash={financeRates.liquidCash}
+      healthToday={(healthTodayRes.data ?? null) as HealthLog | null}
+      activeSupplementCount={(supplementsRes.data ?? []).length}
+      supplementsTakenToday={(supplementLogsTodayRes.data ?? []).length as number}
+      hasRoutine={!!routine}
+      exerciseCount={exercises.length}
+      exercisesCompletedToday={completionsToday.length}
+      totalFollowers={totalFollowers}
     />
   );
 }

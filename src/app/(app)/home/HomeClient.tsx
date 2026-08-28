@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Play, Flame, Timer, CheckCircle2, ListChecks, Wallet } from "lucide-react";
-import type { Profile, Goal, Task, FocusSession, Habit, HabitLog } from "@/lib/supabase/types";
+import { MessageCircle, Play, Flame, Timer, CheckCircle2, ListChecks, Dumbbell, HeartPulse, Pill, Target, Megaphone, Wallet } from "lucide-react";
+import type { Profile, Goal, Task, FocusSession, Habit, HabitLog, HealthLog } from "@/lib/supabase/types";
 import { AmariLifeCircle } from "@/components/AmariLifeCircle";
 import { MetricCard } from "@/components/MetricCard";
 import { TimelineChart } from "@/components/TimelineChart";
@@ -16,7 +16,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ChatSheet } from "@/components/ChatSheet";
 import { QuickAdd } from "@/components/QuickAdd";
 import { NextTaskSquare } from "@/components/NextTaskSquare";
-import { StatPillButton } from "@/components/StatPillButton";
+import { ModuleCard } from "@/components/ModuleCard";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 
@@ -33,6 +33,13 @@ interface HomeClientProps {
   today: string;
   financeRunwayDays: number | null;
   financeLiquidCash: number;
+  healthToday: HealthLog | null;
+  activeSupplementCount: number;
+  supplementsTakenToday: number;
+  hasRoutine: boolean;
+  exerciseCount: number;
+  exercisesCompletedToday: number;
+  totalFollowers: number;
 }
 
 function last14Days(today: string): string[] {
@@ -62,7 +69,27 @@ function greeting() {
   return "Good night";
 }
 
-export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSession, habits, habitLogsToday, recentHabitLogs, lifeScore, today, financeRunwayDays, financeLiquidCash }: HomeClientProps) {
+export function HomeClient({
+  profile,
+  goals,
+  tasks,
+  focusSecondsToday,
+  activeSession,
+  habits,
+  habitLogsToday,
+  recentHabitLogs,
+  lifeScore,
+  today,
+  financeRunwayDays,
+  financeLiquidCash,
+  healthToday,
+  activeSupplementCount,
+  supplementsTakenToday,
+  hasRoutine,
+  exerciseCount,
+  exercisesCompletedToday,
+  totalFollowers,
+}: HomeClientProps) {
   const router = useRouter();
   const toast = useToast();
   const [chatOpen, setChatOpen] = useState(false);
@@ -161,30 +188,57 @@ export function HomeClient({ profile, goals, tasks, focusSecondsToday, activeSes
 
       <TimelineChart blocks={timelineBlocks} />
 
-      <StatPillButton
-        href="/finance"
-        value={financeRunwayDays === null ? "—" : `${financeRunwayDays}d`}
-        label="Finance runway"
-        progress={financeRunwayDays === null ? 0 : Math.max(0, Math.min(100, (financeRunwayDays / 90) * 100))}
-        accent={financeRunwayDays !== null && financeRunwayDays < 14 ? "error" : financeRunwayDays !== null && financeRunwayDays < 30 ? "warning" : "success"}
-      />
-
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-text">Shortcuts</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/finance" className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-border-strong">
-            <Wallet className="mb-2 h-4 w-4 text-blue-light" strokeWidth={2} />
-            <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Finance</p>
-            <p className="mt-0.5 text-lg font-semibold text-text">
-              {financeRunwayDays === null ? "—" : `${financeRunwayDays}d`} <span className="text-xs font-normal text-text-secondary">runway</span>
-            </p>
-            <p className="text-xs text-text-secondary">{financeLiquidCash.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })} liquid</p>
-          </Link>
-          <Link href="/goals" className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-border-strong">
-            <ListChecks className="mb-2 h-4 w-4 text-blue-light" strokeWidth={2} />
-            <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Goals</p>
-            <p className="mt-0.5 text-lg font-semibold text-text">{goals.length} <span className="text-xs font-normal text-text-secondary">active</span></p>
-          </Link>
+        <h2 className="mb-3 text-sm font-semibold text-text">Modules</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <ModuleCard
+            href="/fitness"
+            icon={Dumbbell}
+            label="Train"
+            stat={hasRoutine ? `${exercisesCompletedToday}/${exerciseCount}` : "—"}
+            sub={hasRoutine ? "done today" : "No routine yet"}
+            accent={hasRoutine && exerciseCount > 0 && exercisesCompletedToday === exerciseCount ? "blue" : "muted"}
+          />
+          <ModuleCard
+            href="/health"
+            icon={HeartPulse}
+            label="Vitals"
+            stat={healthToday?.steps != null ? healthToday.steps.toLocaleString() : "—"}
+            sub={healthToday?.sleep_hours != null ? `${healthToday.sleep_hours}h sleep` : "Not logged today"}
+            accent={healthToday ? "blue" : "muted"}
+          />
+          <ModuleCard
+            href="/health"
+            icon={Pill}
+            label="Fuel"
+            stat={activeSupplementCount ? `${supplementsTakenToday}/${activeSupplementCount}` : "—"}
+            sub={activeSupplementCount ? "supplements taken" : "None tracked"}
+            accent={activeSupplementCount > 0 && supplementsTakenToday === activeSupplementCount ? "blue" : "muted"}
+          />
+          <ModuleCard
+            href="/focus"
+            icon={Target}
+            label="Peak"
+            stat={`${Math.round(focusSecondsToday / 60)}m`}
+            sub={activeSession ? "Session running" : "Focused today"}
+            accent={activeSession ? "warning" : focusSecondsToday > 0 ? "blue" : "muted"}
+          />
+          <ModuleCard
+            href="/business"
+            icon={Megaphone}
+            label="Brand"
+            stat={totalFollowers ? totalFollowers.toLocaleString() : "—"}
+            sub="total followers"
+            accent={totalFollowers > 0 ? "violet" : "muted"}
+          />
+          <ModuleCard
+            href="/finance"
+            icon={Wallet}
+            label="Finance"
+            stat={financeRunwayDays === null ? "—" : `${financeRunwayDays}d`}
+            sub={`${financeLiquidCash.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })} liquid`}
+            accent={financeRunwayDays !== null && financeRunwayDays < 14 ? "error" : financeRunwayDays !== null && financeRunwayDays < 30 ? "warning" : "blue"}
+          />
         </div>
       </section>
 
