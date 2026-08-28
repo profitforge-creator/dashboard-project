@@ -287,9 +287,14 @@ export function HomeClient({
 
       {habits.length > 0 && (
         <section className="space-y-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
-            <Flame className="h-4 w-4 text-blue-light" strokeWidth={2} /> Habits
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
+              <Flame className="h-4 w-4 text-blue-light" strokeWidth={2} /> Habits
+            </h2>
+            <Link href="/habits" className="text-xs font-semibold text-blue-light">
+              Manage
+            </Link>
+          </div>
           {habits.map((h) => {
             const days = last14Days(today).map((date) => ({
               date,
