@@ -207,10 +207,13 @@ export interface HealthLog {
   steps: number | null;
   sleep_hours: number | null;
   sleep_quality: number | null;
+  water_bottles: number;
   notes: string;
   source: "manual" | "shortcut";
   created_at: string;
 }
+
+export type SupplementTimeSlot = "morning" | "midday" | "evening" | "before_bed" | "anytime";
 
 export interface Supplement {
   id: string;
@@ -218,6 +221,7 @@ export interface Supplement {
   name: string;
   dosage: string;
   schedule_note: string;
+  time_slot: SupplementTimeSlot;
   active: boolean;
   created_at: string;
 }

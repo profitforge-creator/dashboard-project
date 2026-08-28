@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Footprints, Moon, Pill, Link2, RefreshCw, Copy, Check } from "lucide-react";
-import type { HealthLog, Supplement, SupplementLog } from "@/lib/supabase/types";
+import { Plus, Trash2, Footprints, Moon, Pill, Link2, RefreshCw, Copy, Check, Droplets, Minus, Sunrise, Sun, Sunset, Clock } from "lucide-react";
+import type { HealthLog, Supplement, SupplementLog, SupplementTimeSlot } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
 import { PerformanceChart } from "@/components/PerformanceChart";
 import { BarChart } from "@/components/BarChart";
 import { MetricCard } from "@/components/MetricCard";
@@ -41,6 +42,15 @@ function dayLabel(iso: string) {
   return WEEKDAY_NARROW[new Date(iso + "T12:00:00").getDay()];
 }
 
+const SLOT_META: Record<SupplementTimeSlot, { label: string; window: string; icon: typeof Sunrise }> = {
+  morning: { label: "Morning", window: "7-10 AM", icon: Sunrise },
+  midday: { label: "Midday", window: "12-2 PM", icon: Sun },
+  evening: { label: "Evening", window: "4-9 PM", icon: Sunset },
+  before_bed: { label: "Before bed", window: "10 PM", icon: Moon },
+  anytime: { label: "Anytime", window: "No fixed window", icon: Clock },
+};
+const SLOT_ORDER: SupplementTimeSlot[] = ["morning", "midday", "evening", "before_bed", "anytime"];
+
 export function HealthClient({ logs, supplements, supplementLogs, syncToken, today }: HealthClientProps) {
   const router = useRouter();
   const toast = useToast();
@@ -55,7 +65,16 @@ export function HealthClient({ logs, supplements, supplementLogs, syncToken, tod
   const [sleepForm, setSleepForm] = useState(todayLog?.sleep_hours?.toString() ?? "");
   const [qualityForm, setQualityForm] = useState(todayLog?.sleep_quality ?? 3);
 
-  const [supForm, setSupForm] = useState({ name: "", dosage: "", schedule_note: "" });
+  const [supForm, setSupForm] = useState<{ name: string; dosage: string; schedule_note: string; time_slot: SupplementTimeSlot }>({
+    name: "",
+    dosage: "",
+    schedule_note: "",
+    time_slot: "anytime",
+  });
+
+  const WATER_TARGET_BOTTLES = 8;
+  const WATER_BOTTLE_LITERS = 0.5;
+  const waterToday = todayLog?.water_bottles ?? 0;
 
   // `days` depends on "now" and weekday labels are locale-derived — computing it during the
   // server render and re-computing during client hydration can diverge (server clock/locale vs
@@ -111,6 +130,24 @@ export function HealthClient({ logs, supplements, supplementLogs, syncToken, tod
     router.refresh();
   }
 
+  async function logWater(delta: number) {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const next = Math.max(0, waterToday + delta);
+    const { error } = await supabase.from("health_logs").upsert(
+      { user_id: user.id, log_date: today, water_bottles: next, source: todayLog?.source ?? "manual" },
+      { onConflict: "user_id,log_date" }
+    );
+    if (error) {
+      toast("Couldn't log water.", "error");
+      return;
+    }
+    router.refresh();
+  }
+
   async function toggleSupplement(supplementId: string, taken: boolean) {
     const supabase = createClient();
     const {
@@ -137,13 +174,14 @@ export function HealthClient({ logs, supplements, supplementLogs, syncToken, tod
       name: supForm.name.trim(),
       dosage: supForm.dosage.trim(),
       schedule_note: supForm.schedule_note.trim(),
+      time_slot: supForm.time_slot,
     });
     if (error) {
       toast("Couldn't add supplement.", "error");
       return;
     }
     toast("Supplement added.", "success");
-    setSupForm({ name: "", dosage: "", schedule_note: "" });
+    setSupForm({ name: "", dosage: "", schedule_note: "", time_slot: "anytime" });
     setSupSheetOpen(false);
     router.refresh();
   }
@@ -223,50 +261,107 @@ export function HealthClient({ logs, supplements, supplementLogs, syncToken, tod
         <BarChart data={stepsData} />
       </div>
 
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="label-mono flex items-center gap-1.5 text-text-secondary">
+            <Droplets className="h-3.5 w-3.5" strokeWidth={2} /> Water
+          </span>
+        </div>
+        <p className="text-3xl font-semibold tabular-nums text-text">
+          {waterToday} <span className="text-base font-normal text-text-secondary">/ {WATER_TARGET_BOTTLES} bottles</span>
+        </p>
+        <button
+          onClick={() => logWater(1)}
+          className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue text-sm font-semibold text-bg transition-colors hover:bg-blue/90"
+        >
+          <Droplets className="h-4 w-4" strokeWidth={2} /> Drank a bottle
+        </button>
+        {waterToday > 0 && (
+          <button onClick={() => logWater(-1)} className="mt-2 flex min-h-9 w-full items-center justify-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text">
+            <Minus className="h-3 w-3" strokeWidth={2} /> Undo one
+          </button>
+        )}
+        <div className="mt-3 flex items-center justify-between text-xs text-text-secondary">
+          <span>{(WATER_TARGET_BOTTLES * WATER_BOTTLE_LITERS).toFixed(1)}L target</span>
+          <span>{Math.max(0, WATER_TARGET_BOTTLES - waterToday)} bottles to go</span>
+        </div>
+        <div className="mt-2 flex gap-1">
+          {Array.from({ length: WATER_TARGET_BOTTLES }).map((_, i) => (
+            <span key={i} className={cn("h-1.5 flex-1 rounded-full", i < waterToday ? "bg-blue" : "bg-card-secondary")} />
+          ))}
+        </div>
+      </section>
+
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text">Supplements</h2>
-          <button onClick={() => setSupSheetOpen(true)} className="flex items-center gap-1 text-xs font-semibold text-blue-light">
-            <Plus className="h-3.5 w-3.5" /> Add
-          </button>
+          <span className="label-mono flex items-center gap-1.5 text-text-secondary">
+            <Pill className="h-3.5 w-3.5" strokeWidth={2} /> Daily stack
+          </span>
+          <span className="label-mono text-text-secondary">
+            {takenTodayIds.size}/{supplements.filter((s) => s.active).length} taken
+          </span>
         </div>
-        {supplements.length === 0 ? (
+
+        {supplements.filter((s) => s.active).length === 0 ? (
           <EmptyState icon={Pill} title="No supplements tracked" description="Add one to check it off daily." />
         ) : (
-          <div className="space-y-2">
-            {supplements
-              .filter((s) => s.active)
-              .map((s) => {
-                const taken = takenTodayIds.has(s.id);
-                return (
-                  <div key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3.5">
-                    <button onClick={() => toggleSupplement(s.id, taken)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                      <span
-                        className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                          taken ? "border-success bg-success text-bg" : "border-border-strong text-transparent"
-                        }`}
-                      >
-                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                      </span>
-                      <span className="min-w-0">
-                        <p className={`truncate text-sm font-medium ${taken ? "text-text-secondary line-through" : "text-text"}`}>{s.name}</p>
-                        {(s.dosage || s.schedule_note) && (
-                          <p className="truncate text-xs text-text-secondary">
-                            {s.dosage}
-                            {s.dosage && s.schedule_note && " · "}
-                            {s.schedule_note}
-                          </p>
-                        )}
-                      </span>
-                    </button>
-                    <button onClick={() => deleteSupplement(s.id)} aria-label={`Remove ${s.name}`} className="flex-shrink-0 text-text-secondary transition-colors hover:text-error">
-                      <Trash2 className="h-4 w-4" strokeWidth={2} />
-                    </button>
-                  </div>
-                );
-              })}
+          <div className="space-y-4">
+            {SLOT_ORDER.map((slot) => {
+              const slotSupplements = supplements.filter((s) => s.active && s.time_slot === slot);
+              const meta = SLOT_META[slot];
+              const SlotIcon = meta.icon;
+              return (
+                <div key={slot}>
+                  <p className="label-mono mb-2 flex items-center gap-1.5 text-text-secondary">
+                    <SlotIcon className="h-3 w-3" strokeWidth={2} /> {meta.label} · {meta.window}
+                  </p>
+                  {slotSupplements.length === 0 ? (
+                    <p className="pl-4 text-xs italic text-text-secondary/60">Nothing yet</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {slotSupplements.map((s) => {
+                        const taken = takenTodayIds.has(s.id);
+                        return (
+                          <div key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3.5">
+                            <button onClick={() => toggleSupplement(s.id, taken)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                              <span
+                                className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                                  taken ? "border-success bg-success text-bg" : "border-border-strong text-transparent"
+                                }`}
+                              >
+                                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                              </span>
+                              <span className="min-w-0">
+                                <p className={`truncate text-sm font-medium ${taken ? "text-text-secondary line-through" : "text-text"}`}>{s.name}</p>
+                                {(s.dosage || s.schedule_note) && (
+                                  <p className="truncate text-xs text-text-secondary">
+                                    {s.dosage}
+                                    {s.dosage && s.schedule_note && " · "}
+                                    {s.schedule_note}
+                                  </p>
+                                )}
+                              </span>
+                            </button>
+                            <button onClick={() => deleteSupplement(s.id)} aria-label={`Remove ${s.name}`} className="flex-shrink-0 text-text-secondary transition-colors hover:text-error">
+                              <Trash2 className="h-4 w-4" strokeWidth={2} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
+
+        <button
+          onClick={() => setSupSheetOpen(true)}
+          className="mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border text-sm font-medium text-text-secondary hover:border-border-strong hover:text-text"
+        >
+          <Plus className="h-3.5 w-3.5" strokeWidth={2} /> Search supplements to add
+        </button>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-5">
@@ -390,7 +485,7 @@ export function HealthClient({ logs, supplements, supplementLogs, syncToken, tod
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Schedule</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Schedule note (optional)</label>
             <input
               type="text"
               value={supForm.schedule_note}
@@ -398,6 +493,27 @@ export function HealthClient({ logs, supplements, supplementLogs, syncToken, tod
               placeholder="e.g. With breakfast"
               className="min-h-11 w-full rounded-xl border border-border bg-bg px-3.5 text-sm text-text outline-none focus:border-blue"
             />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">When</label>
+            <div className="flex flex-wrap gap-2">
+              {SLOT_ORDER.map((slot) => {
+                const SlotIcon = SLOT_META[slot].icon;
+                return (
+                  <button
+                    type="button"
+                    key={slot}
+                    onClick={() => setSupForm((f) => ({ ...f, time_slot: slot }))}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+                      supForm.time_slot === slot ? "border-blue bg-blue/15 text-blue-light" : "border-border text-text-secondary hover:text-text"
+                    )}
+                  >
+                    <SlotIcon className="h-3.5 w-3.5" strokeWidth={2} /> {SLOT_META[slot].label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <Button type="submit" block>
             Add supplement
