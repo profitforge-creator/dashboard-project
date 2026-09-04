@@ -16,9 +16,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const { message, history } = (await request.json()) as {
+  const { message, history, page, pageLabel } = (await request.json()) as {
     message: string;
     history?: { role: "user" | "assistant"; content: string }[];
+    page?: string;
+    pageLabel?: string;
   };
   if (!message?.trim()) return NextResponse.json({ error: "Missing message" }, { status: 400 });
 
@@ -41,6 +43,9 @@ export async function POST(request: Request) {
           `You are Amari, a personal life-coaching assistant inside the user's private dashboard. ` +
           `Coaching personality: ${profile?.coaching_personality ?? "direct"}. Be concise, warm, and practical — a few sentences, not an essay. ` +
           `Ground answers in the user's real goals and tasks below when relevant. Never invent data you weren't given.\n\n` +
+          (pageLabel
+            ? `The user is currently viewing the "${pageLabel}" section of the dashboard (route: ${page}). If their message is ambiguous, assume it relates to what's on that page — but you cannot yet read that page's live on-screen data or make edits anywhere in the app; say so plainly rather than guessing at numbers you weren't given.\n\n`
+            : "") +
           `Active goals:\n${JSON.stringify(goals ?? [])}\n\nRecent tasks:\n${JSON.stringify(tasks ?? [])}`,
       },
     });

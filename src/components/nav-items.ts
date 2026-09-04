@@ -1,4 +1,4 @@
-import { Home, Wallet, Timer, Target, BarChart3, User, HeartPulse, Dumbbell, Briefcase, Flame } from "lucide-react";
+import { Home, Wallet, Timer, Target, BarChart3, User, HeartPulse, Dumbbell, Briefcase, Flame, Sparkles } from "lucide-react";
 
 export const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Home },
@@ -10,5 +10,6 @@ export const NAV_ITEMS = [
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/habits", label: "Habits", icon: Flame },
   { href: "/insights", label: "Insights", icon: BarChart3 },
+  { href: "/assistant", label: "Assistant", icon: Sparkles },
   { href: "/profile", label: "Profile", icon: User },
 ] as const;

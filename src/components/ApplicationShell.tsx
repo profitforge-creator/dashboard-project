@@ -1,5 +1,6 @@
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { MobileBottomNavigation } from "@/components/MobileBottomNavigation";
+import { GlobalAssistant } from "@/components/assistant/GlobalAssistant";
 
 interface ApplicationShellProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export function ApplicationShell({ children, rightPanel }: ApplicationShellProps
         </aside>
       )}
       <MobileBottomNavigation />
+      <GlobalAssistant />
     </div>
   );
 }

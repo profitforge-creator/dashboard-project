@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ApplicationShell } from "@/components/ApplicationShell";
 import { ToastProvider } from "@/components/Toast";
 import { ConfirmProvider } from "@/components/ConfirmationDialog";
+import { AssistantProvider } from "@/lib/assistant/AssistantContext";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -23,7 +24,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <ToastProvider>
       <ConfirmProvider>
-        <ApplicationShell>{children}</ApplicationShell>
+        <AssistantProvider>
+          <ApplicationShell>{children}</ApplicationShell>
+        </AssistantProvider>
       </ConfirmProvider>
     </ToastProvider>
   );
