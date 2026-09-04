@@ -23,7 +23,7 @@ export function FocusSessionCard({ session, elapsedSeconds, onPause, onResume, o
     <div className="overflow-hidden rounded-3xl border border-blue/30 bg-gradient-to-br from-blue-dark/40 to-card p-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-blue-light">Active Focus Session</p>
+          <p className="label-mono text-blue-light">Active Focus Session</p>
           <p className="mt-0.5 text-sm text-text-secondary">{session.preset}</p>
         </div>
         <span className="rounded-full bg-blue/15 px-2.5 py-1 text-xs font-semibold text-blue-light capitalize">{session.status}</span>

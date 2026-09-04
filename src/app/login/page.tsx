@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { BrandMark } from "@/components/BrandMark";
+import { SegmentedControl } from "@/components/SegmentedControl";
+import { Button } from "@/components/Button";
 
 type Mode = "signin" | "signup";
 
@@ -77,21 +79,15 @@ export default function LoginPage() {
           </div>
         ) : (
           <>
-            <div className="mb-5 flex rounded-xl border border-border bg-card p-1">
-              <button
-                type="button"
-                onClick={() => { setMode("signin"); setStatus("idle"); setError(""); }}
-                className={`min-h-9 flex-1 rounded-lg text-sm font-semibold transition-colors ${mode === "signin" ? "bg-blue text-white" : "text-text-secondary"}`}
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode("signup"); setStatus("idle"); setError(""); }}
-                className={`min-h-9 flex-1 rounded-lg text-sm font-semibold transition-colors ${mode === "signup" ? "bg-blue text-white" : "text-text-secondary"}`}
-              >
-                Create account
-              </button>
+            <div className="mb-5 flex justify-center">
+              <SegmentedControl
+                options={[
+                  { value: "signin", label: "Sign in" },
+                  { value: "signup", label: "Create account" },
+                ]}
+                value={mode}
+                onChange={(m) => { setMode(m); setStatus("idle"); setError(""); }}
+              />
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -123,13 +119,9 @@ export default function LoginPage() {
                 />
               </div>
               {status === "error" && <p className="text-sm text-error">{error}</p>}
-              <button
-                type="submit"
-                disabled={status === "loading"}
-                className="min-h-11 rounded-xl bg-blue px-4 text-[15px] font-semibold text-white transition-colors hover:bg-blue/90 disabled:opacity-50"
-              >
+              <Button type="submit" disabled={status === "loading"} block>
                 {status === "loading" ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
-              </button>
+              </Button>
             </form>
           </>
         )}

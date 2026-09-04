@@ -24,7 +24,7 @@ import { DonutChart } from "@/components/DonutChart";
 import { PerformanceChart } from "@/components/PerformanceChart";
 import { Sheet } from "@/components/Sheet";
 import { Button } from "@/components/Button";
-import { ChatSheet } from "@/components/ChatSheet";
+import { useAssistant } from "@/lib/assistant/AssistantContext";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmationDialog";
@@ -82,8 +82,7 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
   const toast = useToast();
   const confirm = useConfirm();
   const [tab, setTab] = useState<Tab>("overview");
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessage, setChatMessage] = useState<string | undefined>(undefined);
+  const { askAndOpen } = useAssistant();
 
   // `graphDays` depends on "now" (weekday labels + which days count as "the last N days"), which
   // can differ between the server render and client hydration (server clock/locale vs browser's) —
@@ -94,8 +93,7 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
   const graphDays = useMemo(() => (mounted ? lastNDays(GRAPH_PERIOD_DAYS[graphPeriod]) : []), [graphPeriod, mounted]);
 
   function askAmari(text: string) {
-    setChatMessage(text);
-    setChatOpen(true);
+    askAndOpen(text);
   }
 
   // ---- Ideas ----
@@ -478,7 +476,7 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
       {tab === "ideas" && (
         <div className="space-y-3">
           <div className="flex justify-end">
-            <button onClick={openNewIdea} className="flex items-center gap-1 text-xs font-semibold text-blue-light">
+            <button onClick={openNewIdea} className="flex items-center gap-1 rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-blue-light hover:bg-card-secondary">
               <Plus className="h-3.5 w-3.5" /> Add idea
             </button>
           </div>
@@ -491,15 +489,15 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-text">{idea.title}</p>
                     {idea.description && <p className="mt-1 text-xs text-text-secondary">{idea.description}</p>}
-                    <span className="mt-2 inline-block rounded-full border border-border-strong px-2 py-0.5 text-[10px] uppercase tracking-wide text-blue-light">
+                    <span className="label-mono mt-2 inline-block rounded-full border border-border-strong px-2 py-0.5 text-blue-light">
                       {IDEA_STATUS_LABEL[idea.status]}
                     </span>
                   </div>
                   <div className="flex flex-shrink-0 gap-1">
-                    <button onClick={() => openEditIdea(idea)} aria-label="Edit" className="text-text-secondary hover:text-text">
+                    <button onClick={() => openEditIdea(idea)} aria-label="Edit" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-card-secondary hover:text-text">
                       <Edit2 className="h-3.5 w-3.5" strokeWidth={2} />
                     </button>
-                    <button onClick={() => deleteIdea(idea.id)} aria-label="Delete" className="text-text-secondary hover:text-error">
+                    <button onClick={() => deleteIdea(idea.id)} aria-label="Delete" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-error/10 hover:text-error">
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                     </button>
                   </div>
@@ -513,7 +511,7 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
       {tab === "apps" && (
         <div className="space-y-3">
           <div className="flex justify-end">
-            <button onClick={openNewApp} className="flex items-center gap-1 text-xs font-semibold text-blue-light">
+            <button onClick={openNewApp} className="flex items-center gap-1 rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-blue-light hover:bg-card-secondary">
               <Plus className="h-3.5 w-3.5" /> Add app
             </button>
           </div>
@@ -533,10 +531,10 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
                   </p>
                 </div>
                 <div className="flex flex-shrink-0 gap-1">
-                  <button onClick={() => openEditApp(app)} aria-label="Edit" className="text-text-secondary hover:text-text">
+                  <button onClick={() => openEditApp(app)} aria-label="Edit" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-card-secondary hover:text-text">
                     <Edit2 className="h-4 w-4" strokeWidth={2} />
                   </button>
-                  <button onClick={() => deleteApp(app.id)} aria-label="Delete" className="text-text-secondary hover:text-error">
+                  <button onClick={() => deleteApp(app.id)} aria-label="Delete" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-error/10 hover:text-error">
                     <Trash2 className="h-4 w-4" strokeWidth={2} />
                   </button>
                 </div>
@@ -553,7 +551,7 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
             credentials. Once you have API keys for a platform, real sync can replace manual entry for that one.
           </div>
           <div className="flex justify-end">
-            <button onClick={() => setAccountSheetOpen(true)} className="flex items-center gap-1 text-xs font-semibold text-blue-light">
+            <button onClick={() => setAccountSheetOpen(true)} className="flex items-center gap-1 rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-blue-light hover:bg-card-secondary">
               <Plus className="h-3.5 w-3.5" /> Add account
             </button>
           </div>
@@ -585,7 +583,7 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
                       <button onClick={() => openLogMetrics(acc.id)} className="rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-blue-light hover:bg-card-secondary">
                         Log today
                       </button>
-                      <button onClick={() => deleteAccount(acc.id)} aria-label="Remove account" className="text-text-secondary hover:text-error">
+                      <button onClick={() => deleteAccount(acc.id)} aria-label="Remove account" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-error/10 hover:text-error">
                         <Trash2 className="h-4 w-4" strokeWidth={2} />
                       </button>
                     </div>
@@ -605,7 +603,7 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
       {tab === "models" && (
         <div className="space-y-3">
           <div className="flex justify-end">
-            <button onClick={openNewModel} className="flex items-center gap-1 text-xs font-semibold text-blue-light">
+            <button onClick={openNewModel} className="flex items-center gap-1 rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-blue-light hover:bg-card-secondary">
               <Plus className="h-3.5 w-3.5" /> Add model
             </button>
           </div>
@@ -619,15 +617,15 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
                     <p className="truncate text-sm font-medium text-text">{model.name}</p>
                     {model.description && <p className="mt-1 text-xs text-text-secondary">{model.description}</p>}
                     {model.revenue_model && <p className="mt-1 text-xs text-blue-light">{model.revenue_model}</p>}
-                    <span className="mt-2 inline-block rounded-full border border-border-strong px-2 py-0.5 text-[10px] uppercase tracking-wide text-text-secondary">
+                    <span className="label-mono mt-2 inline-block rounded-full border border-border-strong px-2 py-0.5 text-text-secondary">
                       {MODEL_STATUS_LABEL[model.status]}
                     </span>
                   </div>
                   <div className="flex flex-shrink-0 gap-1">
-                    <button onClick={() => openEditModel(model)} aria-label="Edit" className="text-text-secondary hover:text-text">
+                    <button onClick={() => openEditModel(model)} aria-label="Edit" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-card-secondary hover:text-text">
                       <Edit2 className="h-3.5 w-3.5" strokeWidth={2} />
                     </button>
-                    <button onClick={() => deleteModel(model.id)} aria-label="Delete" className="text-text-secondary hover:text-error">
+                    <button onClick={() => deleteModel(model.id)} aria-label="Delete" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-error/10 hover:text-error">
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                     </button>
                   </div>
@@ -880,7 +878,6 @@ export function BusinessClient({ ideas, apps, models, accounts, metrics }: Busin
         </form>
       </Sheet>
 
-      <ChatSheet open={chatOpen} onClose={() => setChatOpen(false)} initialMessage={chatMessage} />
     </div>
   );
 }

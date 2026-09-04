@@ -34,7 +34,7 @@ export function MetricCard({ icon: Icon, label, value, suffix = "", format, clas
     <div className={cn("rounded-2xl border border-border bg-card p-4", className)}>
       <div className="flex items-center gap-1.5 text-text-secondary">
         <Icon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-        <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+        <span className="label-mono">{label}</span>
       </div>
       <p className="mt-2 text-2xl font-semibold tabular-nums text-text">
         {format ? format(display) : display}

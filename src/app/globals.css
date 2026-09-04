@@ -20,9 +20,13 @@
   --color-border: rgba(170, 245, 210, 0.08);
   --color-border-strong: rgba(170, 245, 210, 0.18);
 
+  /* One typeface for the entire app — headings, labels, body, buttons, nav all resolve
+     through this single stack. --font-serif/--font-mono are kept only so existing
+     `font-mono`/`var(--font-serif)` call sites don't need to be hunted down one by one;
+     they intentionally point at the same sans stack, not a second/third family. */
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-serif: var(--font-serif-display), Georgia, serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-serif: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --radius-lg: 20px;
   --radius-xl: 28px;

@@ -2,18 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Instrument_Serif } from "next/font/google";
 import { Check, Edit2, Trash2, Sparkles, Target } from "lucide-react";
 import type { Goal, GoalCategory, GoalPriority, GoalTerm, Task } from "@/lib/supabase/types";
 import { EmptyState } from "@/components/EmptyState";
 import { Sheet } from "@/components/Sheet";
-import { ChatSheet } from "@/components/ChatSheet";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmationDialog";
+import { useAssistant } from "@/lib/assistant/AssistantContext";
 import { cn, goalCountdown, formatTime12h } from "@/lib/utils";
-
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: "italic" });
 
 type Tab = "long" | "short" | "daily";
 
@@ -43,6 +40,7 @@ export function GoalsClient({ goals, todayTasks, today }: GoalsClientProps) {
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
+  const { askAndOpen } = useAssistant();
 
   const [tab, setTab] = useState<Tab>("short");
   const [now, setNow] = useState<Date | null>(null);
@@ -55,7 +53,6 @@ export function GoalsClient({ goals, todayTasks, today }: GoalsClientProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [chatGoal, setChatGoal] = useState<Goal | null>(null);
 
   const [quickTitle, setQuickTitle] = useState("");
   const [quickDateTime, setQuickDateTime] = useState("");
@@ -220,7 +217,7 @@ export function GoalsClient({ goals, todayTasks, today }: GoalsClientProps) {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary">Amari</p>
-          <h1 className={cn(serif.className, "text-4xl text-text")}>Goals &amp; Schedule</h1>
+          <h1 className="text-3xl font-semibold text-text">Goals &amp; Schedule</h1>
         </div>
         {now && (
           <div className="hidden text-right text-xs text-text-secondary sm:block">
@@ -314,7 +311,15 @@ export function GoalsClient({ goals, todayTasks, today }: GoalsClientProps) {
       ) : listGoals.length ? (
         <div className="flex flex-col gap-2.5">
           {listGoals.map((g) => (
-            <GoalRow key={g.id} goal={g} now={now} onEdit={() => openEdit(g)} onDelete={() => deleteGoal(g)} onComplete={() => toggleComplete(g)} onAskAmari={() => setChatGoal(g)} />
+            <GoalRow
+              key={g.id}
+              goal={g}
+              now={now}
+              onEdit={() => openEdit(g)}
+              onDelete={() => deleteGoal(g)}
+              onComplete={() => toggleComplete(g)}
+              onAskAmari={() => askAndOpen(`Help me make progress on my goal: "${g.title}"`)}
+            />
           ))}
         </div>
       ) : (
@@ -409,11 +414,6 @@ export function GoalsClient({ goals, todayTasks, today }: GoalsClientProps) {
         </form>
       </Sheet>
 
-      <ChatSheet
-        open={!!chatGoal}
-        onClose={() => setChatGoal(null)}
-        initialMessage={chatGoal ? `Help me make progress on my goal: "${chatGoal.title}"` : undefined}
-      />
     </div>
   );
 }
@@ -433,7 +433,7 @@ function HeroCard({ goal, isCompleted, now }: { goal: Goal; isCompleted: boolean
         <span className={cn("h-1.5 w-1.5 rounded-full", dotClass, urgent && "animate-pulse-glow")} />
         <span className={cn("text-xs font-semibold uppercase tracking-[0.2em]", textClass)}>{isCompleted ? "Last completed" : "Coming up"}</span>
       </div>
-      <p className={cn(serif.className, "mt-2 text-3xl text-text")}>{goal.title}</p>
+      <p className="mt-2 text-3xl font-semibold text-text">{goal.title}</p>
       <p className="mt-1 text-sm text-text-secondary">
         {TERM_LABEL[goal.term]}
         {isCompleted ? (
@@ -481,7 +481,7 @@ function GoalRow({
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <p className={cn(serif.className, "min-w-0 flex-1 truncate text-xl text-text")}>{goal.title}</p>
+        <p className="min-w-0 flex-1 truncate text-xl font-semibold text-text">{goal.title}</p>
         {cd && <span className={cn("flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide", pillClass)}>{cd.pillLabel}</span>}
         <div className="flex flex-shrink-0 items-center gap-0.5">
           <button onClick={onComplete} aria-label="Mark complete" className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-success/10 hover:text-success">

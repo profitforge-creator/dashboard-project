@@ -24,7 +24,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ProgressRing } from "@/components/ProgressRing";
 import { FinanceStatCard } from "@/components/FinanceStatCard";
 import { Sheet } from "@/components/Sheet";
-import { ChatSheet } from "@/components/ChatSheet";
+import { useAssistant } from "@/lib/assistant/AssistantContext";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmationDialog";
@@ -139,6 +139,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
+  const { askAndOpen } = useAssistant();
   const [tab, setTab] = useState<Tab>("overview");
 
   const [txSheetOpen, setTxSheetOpen] = useState(false);
@@ -159,8 +160,6 @@ export function FinanceClient({ transactions, period, categories, financialGoals
   const [editingWishlistItem, setEditingWishlistItem] = useState<WishlistItem | null>(null);
   const [wishlistForm, setWishlistForm] = useState(emptyWishlistForm);
 
-  const [chatMessage, setChatMessage] = useState<string | undefined>(undefined);
-  const [chatOpen, setChatOpen] = useState(false);
 
   const [scenarioIncome, setScenarioIncome] = useState("0");
   const [scenarioSpending, setScenarioSpending] = useState("0");
@@ -382,8 +381,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
   }
 
   function askAmariAbout(text: string) {
-    setChatMessage(text);
-    setChatOpen(true);
+    askAndOpen(text);
   }
 
   // ---------- Orders ----------
@@ -570,12 +568,12 @@ export function FinanceClient({ transactions, period, categories, financialGoals
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Baseline runway</p>
+                <p className="label-mono text-text-secondary">Baseline runway</p>
                 <p className="mt-1 text-2xl font-semibold text-text">{rates.baselineRunwayDays === null ? "—" : `${rates.baselineRunwayDays} days`}</p>
                 <p className="text-xs text-text-secondary">{rates.baselineRunwayDate ? `Until ${rates.baselineRunwayDate.toLocaleDateString()}` : "No recurring baseline costs logged yet"}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Actual runway (last 30d burn)</p>
+                <p className="label-mono text-text-secondary">Actual runway (last 30d burn)</p>
                 <p className="mt-1 text-2xl font-semibold text-text">{rates.actualRunwayDays === null ? "—" : `${rates.actualRunwayDays} days`}</p>
                 <p className="text-xs text-text-secondary">{rates.actualRunwayDate ? `Until ${rates.actualRunwayDate.toLocaleDateString()}` : "No spending logged in the last 30 days"}</p>
               </div>
@@ -637,7 +635,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
                 className="min-h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-sm text-text outline-none focus:border-blue"
               />
             </div>
-            <button onClick={exportCSV} className="min-h-10 rounded-xl border border-border px-3 text-sm font-medium text-text-secondary hover:text-text">
+            <button onClick={exportCSV} className="flex min-h-10 items-center rounded-full border border-border-strong px-3.5 text-sm font-medium text-text-secondary hover:text-text">
               Export CSV
             </button>
           </div>
@@ -732,7 +730,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
       {tab === "goals" && (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <button onClick={openNewGoal} className="flex min-h-10 items-center gap-1.5 rounded-xl border border-border px-3.5 text-sm font-semibold text-text hover:bg-card">
+            <button onClick={openNewGoal} className="flex min-h-10 items-center gap-1.5 rounded-full border border-border-strong px-3.5 text-sm font-semibold text-text hover:bg-card">
               <Plus className="h-4 w-4" /> New Financial Goal
             </button>
           </div>
@@ -796,7 +794,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
           </div>
 
           <div className="rounded-2xl border border-blue/25 bg-blue/5 p-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-blue-light">Scenario result</p>
+            <p className="label-mono text-blue-light">Scenario result</p>
             <p className="mt-1 text-2xl font-semibold text-text">{scenario.runwayDays === null ? "—" : `${scenario.runwayDays} days`}</p>
             <p className="text-xs text-text-secondary">
               {scenario.runwayDate ? `Estimated until ${scenario.runwayDate.toLocaleDateString()}` : "No burn to project"} · currently {rates.actualRunwayDays ?? "—"} days
@@ -812,7 +810,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
       {tab === "orders" && (
         <div className="space-y-3">
           <div className="flex justify-end">
-            <button onClick={openNewOrder} className="flex min-h-10 items-center gap-1.5 rounded-xl border border-border px-3.5 text-sm font-semibold text-text hover:bg-card">
+            <button onClick={openNewOrder} className="flex min-h-10 items-center gap-1.5 rounded-full border border-border-strong px-3.5 text-sm font-semibold text-text hover:bg-card">
               <Plus className="h-4 w-4" /> Add Order
             </button>
           </div>
@@ -828,7 +826,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
                       {o.merchant && `${o.merchant} · `}
                       {currency(o.amount)} · {new Date(o.ordered_at).toLocaleDateString()}
                     </p>
-                    <span className="mt-2 inline-block rounded-full border border-border-strong px-2 py-0.5 text-[10px] uppercase tracking-wide text-blue-light">
+                    <span className="label-mono mt-2 inline-block rounded-full border border-border-strong px-2 py-0.5 text-blue-light">
                       {ORDER_STATUS_LABEL[o.status]}
                     </span>
                     {o.tracking_note && <p className="mt-1.5 text-xs text-text-secondary">{o.tracking_note}</p>}
@@ -851,7 +849,7 @@ export function FinanceClient({ transactions, period, categories, financialGoals
       {tab === "wishlist" && (
         <div className="space-y-3">
           <div className="flex justify-end">
-            <button onClick={openNewWishlistItem} className="flex min-h-10 items-center gap-1.5 rounded-xl border border-border px-3.5 text-sm font-semibold text-text hover:bg-card">
+            <button onClick={openNewWishlistItem} className="flex min-h-10 items-center gap-1.5 rounded-full border border-border-strong px-3.5 text-sm font-semibold text-text hover:bg-card">
               <Plus className="h-4 w-4" /> Add to Wishlist
             </button>
           </div>
@@ -1135,7 +1133,6 @@ export function FinanceClient({ transactions, period, categories, financialGoals
         </form>
       </Sheet>
 
-      <ChatSheet open={chatOpen} onClose={() => setChatOpen(false)} initialMessage={chatMessage} />
     </div>
   );
 }

@@ -157,7 +157,7 @@ export function ModuleCard({ href, icon: Icon, index, label, stat, sub, visual, 
       </div>
 
       <div className="relative">
-        <p className={cn("italic text-text", hero ? "text-2xl" : "text-lg")} style={{ fontFamily: "var(--font-serif)" }}>
+        <p className={cn("font-semibold text-text", hero ? "text-2xl" : "text-lg")}>
           {label}
         </p>
         <p className="text-xs text-text-secondary">{sub}</p>

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Pencil, Flame, Check } from "lucide-react";
+import { Plus, Trash2, Pencil, Flame, Check, HeartPulse, Briefcase, Wallet, Sparkle, Circle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Habit, HabitLog, GoalCategory } from "@/lib/supabase/types";
 import { HabitGrid } from "@/components/HabitGrid";
 import { EmptyState } from "@/components/EmptyState";
@@ -19,12 +20,12 @@ interface HabitsClientProps {
   today: string;
 }
 
-const CATEGORIES: { key: GoalCategory; label: string }[] = [
-  { key: "health", label: "Health" },
-  { key: "business", label: "Business" },
-  { key: "financial", label: "Financial" },
-  { key: "spiritual", label: "Spiritual" },
-  { key: "general", label: "General" },
+const CATEGORIES: { key: GoalCategory; label: string; icon: LucideIcon }[] = [
+  { key: "health", label: "Health", icon: HeartPulse },
+  { key: "business", label: "Business", icon: Briefcase },
+  { key: "financial", label: "Financial", icon: Wallet },
+  { key: "spiritual", label: "Spiritual", icon: Sparkle },
+  { key: "general", label: "General", icon: Circle },
 ];
 
 function last28Days(today: string): string[] {
@@ -128,7 +129,7 @@ export function HabitsClient({ habits, logs, today }: HabitsClientProps) {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-2xl font-semibold text-text">Habits</p>
+          <h1 className="text-2xl font-semibold text-text">Habits</h1>
           <p className="text-sm text-text-secondary">
             {habits.length ? `${doneToday}/${habits.length} done today` : "Track daily consistency"}
           </p>
@@ -206,17 +207,18 @@ export function HabitsClient({ habits, logs, today }: HabitsClientProps) {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-text-secondary">Category</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((c) => (
                 <button
                   type="button"
                   key={c.key}
                   onClick={() => setForm((f) => ({ ...f, category: c.key }))}
                   className={cn(
-                    "flex h-10 items-center justify-center rounded-xl border text-xs font-semibold transition-colors",
+                    "flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold transition-colors",
                     form.category === c.key ? "border-blue bg-blue/15 text-blue-light" : "border-border text-text-secondary hover:text-text"
                   )}
                 >
+                  <c.icon className="h-3.5 w-3.5" strokeWidth={2} />
                   {c.label}
                 </button>
               ))}

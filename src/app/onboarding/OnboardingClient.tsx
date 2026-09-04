@@ -253,10 +253,8 @@ export function OnboardingClient({ userId, email }: { userId: string; email: str
 function QuestionStep({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <div>
-      <h1 className="text-[28px] italic leading-tight text-text" style={{ fontFamily: "var(--font-serif)" }}>
-        {title}
-      </h1>
-      <p className="mt-2 text-sm italic text-blue-light">{subtitle}</p>
+      <h1 className="text-[26px] font-semibold leading-tight text-text">{title}</h1>
+      <p className="mt-2 text-sm text-blue-light">{subtitle}</p>
       <div className="mt-8">{children}</div>
     </div>
   );

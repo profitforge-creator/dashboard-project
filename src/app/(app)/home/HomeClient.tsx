@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Play, Flame, Timer, CheckCircle2, ListChecks, Dumbbell, HeartPulse, Pill, Target, Megaphone, Wallet, Settings } from "lucide-react";
+import { Play, Flame, Timer, CheckCircle2, ListChecks, Dumbbell, HeartPulse, Pill, Target, Megaphone, Wallet, Settings } from "lucide-react";
 import type { Profile, Goal, Task, FocusSession, Habit, HabitLog, HealthLog } from "@/lib/supabase/types";
 import { AmariLifeCircle } from "@/components/AmariLifeCircle";
 import { MetricCard } from "@/components/MetricCard";
@@ -13,7 +13,6 @@ import { FocusSessionCard } from "@/components/FocusSessionCard";
 import { DeadlineCard } from "@/components/DeadlineCard";
 import { HabitGrid } from "@/components/HabitGrid";
 import { EmptyState } from "@/components/EmptyState";
-import { ChatSheet } from "@/components/ChatSheet";
 import { QuickAdd } from "@/components/QuickAdd";
 import { NextTaskSquare } from "@/components/NextTaskSquare";
 import { ModuleCard } from "@/components/ModuleCard";
@@ -93,7 +92,6 @@ export function HomeClient({
 }: HomeClientProps) {
   const router = useRouter();
   const toast = useToast();
-  const [chatOpen, setChatOpen] = useState(false);
 
   const priorities = tasks.filter((t) => t.is_priority);
   const otherTasks = tasks.filter((t) => !t.is_priority);
@@ -164,7 +162,7 @@ export function HomeClient({
             <BrandMark size={18} />
           </span>
           <div>
-            <p className="italic text-text" style={{ fontFamily: "var(--font-serif)", fontSize: "1.75rem", lineHeight: 1.1 }}>
+            <p className="text-2xl font-semibold leading-tight text-text">
               {greeting()}, {displayName}
             </p>
             <p className="label-mono mt-1 text-text-secondary">{dateLabel}</p>
@@ -347,22 +345,12 @@ export function HomeClient({
         </div>
       </section>
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => setChatOpen(true)}
-          className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-blue text-[15px] font-semibold text-white transition-colors hover:bg-blue/90"
-        >
-          <MessageCircle className="h-4.5 w-4.5" strokeWidth={2} /> Chat with Amari
-        </button>
-        <Link
-          href="/focus"
-          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card-secondary px-5 text-[15px] font-semibold text-text transition-colors hover:bg-card"
-        >
-          <Play className="h-4 w-4" strokeWidth={2} /> Start Focus
-        </Link>
-      </div>
-
-      <ChatSheet open={chatOpen} onClose={() => setChatOpen(false)} />
+      <Link
+        href="/focus"
+        className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-blue text-[15px] font-semibold text-bg transition-colors hover:bg-blue/90"
+      >
+        <Play className="h-4 w-4" strokeWidth={2} /> Start Focus
+      </Link>
     </div>
   );
 }

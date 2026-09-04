@@ -420,7 +420,7 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
           <div className="flex items-center gap-2.5">
             <RefreshCw className="h-4 w-4 flex-shrink-0 text-blue-light" strokeWidth={2} />
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">Split rotation</p>
+              <p className="label-mono text-text-secondary">Split rotation</p>
               <p className="text-sm font-semibold text-text">{todayRotationDay ? `Today: ${todayRotationDay.name}` : "Not set up yet"}</p>
             </div>
           </div>
@@ -454,19 +454,15 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
                     {split.recommended && (
                       <span className="label-mono mb-2 inline-block rounded-full border border-warning/40 px-2 py-0.5 text-warning">Matched for you</span>
                     )}
-                    <p className="text-2xl italic text-text" style={{ fontFamily: "var(--font-serif)" }}>
-                      {split.name}
-                    </p>
+                    <p className="text-2xl font-semibold text-text">{split.name}</p>
                     <p className="text-sm text-text-secondary">
                       {split.daysPerWeek} {split.cycles ? "per cycle" : "per week"}
                     </p>
                     <p className="label-mono mt-4 text-blue-light">The call</p>
-                    <p className="text-lg italic text-text" style={{ fontFamily: "var(--font-serif)" }}>
-                      {split.call}
-                    </p>
+                    <p className="text-lg font-semibold text-text">{split.call}</p>
                     <p className="mt-1 text-sm text-text-secondary">{split.callBody}</p>
                     <p className="label-mono mt-4 text-blue-light">For you</p>
-                    <p className="mt-1 border-l-2 border-blue/40 pl-3 text-sm italic text-text">{split.forYou}</p>
+                    <p className="mt-1 border-l-2 border-blue/40 pl-3 text-sm text-text">{split.forYou}</p>
                     <Button onClick={() => activateSplit(split)} block className="mt-5">
                       Use this split →
                     </Button>
@@ -507,7 +503,7 @@ export function FitnessClient({ profile, photos, latestAnalysis, routine, exerci
               </div>
             )}
 
-            <p className="italic text-text" style={{ fontFamily: "var(--font-serif)", fontSize: "1.25rem" }}>
+            <p className="text-lg font-semibold text-text">
               {currentDay}
             </p>
 

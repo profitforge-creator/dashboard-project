@@ -52,7 +52,7 @@ const INTEGRATION_META = {
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{title}</h2>
+      <h2 className="label-mono text-text-secondary">{title}</h2>
       <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">{children}</div>
     </section>
   );

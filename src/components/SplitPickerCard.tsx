@@ -51,7 +51,7 @@ export function SplitPickerCard({ split, active, onClick }: SplitPickerCardProps
           </span>
         </div>
       </div>
-      <p className={cn("mt-3 text-lg italic text-text")} style={{ fontFamily: "var(--font-serif)" }}>
+      <p className="mt-3 text-lg font-semibold text-text">
         {split.name}
       </p>
       <p className="text-xs text-text-secondary">
